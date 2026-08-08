@@ -134,8 +134,141 @@ const Armario = {
 };
 
 // ==========================================
-// 4. MOTOR DE RECOMENDACIÓN E INTELIGENCIA
+// 4. MOTOR DE EVALUACIÓN MULTINIVEL Y GENERADOR
 // ==========================================
+
+class FitMeEngine {
+  
+  // CAPA 0: REGLAS DURAS (SANITY CHECKS)
+  static evaluarReglasDuras(prendas, contexto) {
+    const advertencias = [];
+    let estado = "COMPATIBLE";
+
+    const abrigoTotal = prendas.reduce((acc, p) => acc + (p.nivelAbrigo || 5), 0);
+    const temp = contexto.temperatura ?? 18;
+    const esLluvia = contexto.lluvia ?? false;
+
+    if (temp >= 28 && abrigoTotal >= 18) {
+      advertencias.push("Exceso térmico: Nivel de abrigo demasiado alto para la temperatura actual.");
+      estado = "INCOMPATIBLE";
+    }
+    if (temp <= 8 && abrigoTotal < 8) {
+      advertencias.push("Aislamiento insuficiente para el frío actual.");
+      estado = "INCOMPATIBLE";
+    }
+
+    if (esLluvia) {
+      const tieneProteccionLluvia = prendas.some(p => p.material === "Nylon" || p.material === "Cuero");
+      if (!tieneProteccionLluvia) {
+        advertencias.push("Falta de protección contra lluvia en capas externas.");
+        if (estado !== "INCOMPATIBLE") estado = "WARNING";
+      }
+    }
+
+    const categoriasPresentes = prendas.map(p => p.categoria);
+    const duplicadosInternos = categoriasPresentes.filter((cat, idx) => cat === "Capa interna" && categoriasPresentes.indexOf(cat) !== idx);
+    if (duplicadosInternos.length > 0) {
+      advertencias.push("Conflicto de superposición: Dos capas internas seleccionadas.");
+      estado = "INCOMPATIBLE";
+    }
+
+    return { estado, advertencias };
+  }
+
+  // CAPA 1: ARMONÍA DE COLOR
+  static evaluarColorAvanzado(prendas) {
+    const noNeutros = prendas.filter(p => p.saturation > 15 && p.lightness > 15 && p.lightness < 85);
+    
+    if (noNeutros.length <= 1) return { score: 95, razon: "Paleta neutra limpia y versátil." };
+
+    const hues = noNeutros.map(p => p.hue);
+    const diferencia = Math.max(...hues) - Math.min(...hues);
+    const cargaVisualMedia = prendas.reduce((acc, p) => acc + (p.cargaVisual || 3), 0) / prendas.length;
+
+    let score = 70;
+    let razon = "La combinación presenta un contraste moderado.";
+
+    if (diferencia <= 45) {
+      score = 92;
+      razon = "Paleta análoga en tono: colores armónicos y contiguos.";
+    } else if (diferencia >= 150 && diferencia <= 210) {
+      score = 90;
+      razon = "Relación cromática complementaria de alto contraste.";
+    } else if (cargaVisualMedia > 7) {
+      score = 60;
+      razon = "Atención: Elevada carga visual general entre componentes.";
+    }
+
+    return { score, razon };
+  }
+
+  // CAPA 2: COHERENCIA DE FORMALIDAD
+  static evaluarCoherenciaFormalidad(prendas) {
+    if (prendas.length === 0) return { score: 0, promedio: 0, dispersion: 0 };
+
+    const valores = prendas.map(p => p.formalidad || 5);
+    const promedio = valores.reduce((a, b) => a + b, 0) / valores.length;
+    
+    const varianza = valores.reduce((acc, val) => acc + Math.pow(val - promedio, 2), 0) / valores.length;
+    const desviacion = Math.sqrt(varianza);
+
+    let scoreCoherencia = Math.max(0, 100 - (desviacion * 18));
+
+    return {
+      score: Math.round(scoreCoherencia),
+      promedio: promedio.toFixed(1),
+      desviacion: desviacion.toFixed(1)
+    };
+  }
+
+  // EVALUACIÓN GENERAL
+  static evaluarOutfitCompleto(outfit, contexto = {}) {
+    const prendas = outfit.prendas;
+    
+    const reglas = this.evaluarReglasDuras(prendas, contexto);
+    if (reglas.estado === "INCOMPATIBLE") {
+      return {
+        compatibilityScore: 0,
+        recommendationScore: 0,
+        estado: "INCOMPATIBLE",
+        explicacion: reglas.advertencias.join(" "),
+        desglose: { color: 0, clima: 0, formalidad: 0, formalidadPromedio: 0 }
+      };
+    }
+
+    const evalColor = this.evaluarColorAvanzado(prendas);
+    const evalFormalidad = this.evaluarCoherenciaFormalidad(prendas);
+    
+    const abrigoTotal = prendas.reduce((acc, p) => acc + (p.nivelAbrigo || 5), 0);
+    const tempTarget = contexto.temperatura ?? 18;
+    const abrigoIdeal = Math.max(2, Math.round((35 - tempTarget) / 2.5));
+    const difAbrigo = Math.abs(abrigoTotal - abrigoIdeal);
+    const scoreClima = Math.max(0, 100 - (difAbrigo * 12));
+
+    const compatibilityScore = Math.round((evalColor.score * 0.5) + (evalFormalidad.score * 0.5));
+    const recommendationScore = Math.round((compatibilityScore * 0.5) + (scoreClima * 0.5));
+
+    let explicacion = evalColor.razon;
+    if (scoreClima > 85) {
+      explicacion += " El abrigo es óptimo para el clima actual.";
+    } else {
+      explicacion += ` Ajuste térmico moderado para los ${tempTarget}°C.`;
+    }
+
+    return {
+      compatibilityScore,
+      recommendationScore,
+      estado: reglas.estado,
+      explicacion,
+      desglose: {
+        color: evalColor.score,
+        clima: scoreClima,
+        formalidad: evalFormalidad.score,
+        formalidadPromedio: evalFormalidad.promedio
+      }
+    };
+  }
+}
 
 const OutfitGenerator = {
   generarAleatorio(prendasDisponibles) {
@@ -163,44 +296,20 @@ const OutfitGenerator = {
   }
 };
 
-const EvaluadorStylist = {
-  evaluarColor(prendas) {
-    const noNeutros = prendas.filter(p => p.saturation > 15 && p.lightness > 15 && p.lightness < 85);
-    if (noNeutros.length <= 1) return 95;
-
-    const hues = noNeutros.map(p => p.hue);
-    const diferencia = Math.max(...hues) - Math.min(...hues);
-
-    if (diferencia <= 60 || (diferencia >= 150 && diferencia <= 210)) {
-      return 90;
-    }
-    return 65;
-  },
-
-  evaluarClima(prendas, tempObjetivo) {
-    const abrigoTotal = prendas.reduce((acc, p) => acc + (p.nivelAbrigo || 5), 0);
-    const abrigoIdeal = Math.max(2, Math.round((35 - tempObjetivo) / 2.5));
-    const diferencia = Math.abs(abrigoTotal - abrigoIdeal);
-    return Math.max(0, 100 - (diferencia * 12));
-  },
-
-  calcularScore(outfit, tempObjetivo) {
-    const scoreColor = this.evaluarColor(outfit.prendas);
-    const scoreClima = this.evaluarClima(outfit.prendas, tempObjetivo);
-    return Math.round((scoreColor * 0.4) + (scoreClima * 0.6));
-  }
-};
-
 const OutfitGeneratorInteligente = {
   generarMejorOption(prendasDisponibles, tempObjetivo) {
     const candidatos = [];
-    const INTENTOS = 20;
+    const INTENTOS = 25;
 
     for (let i = 0; i < INTENTOS; i++) {
       const candidato = OutfitGenerator.generarAleatorio(prendasDisponibles);
       if (candidato) {
-        candidato.score = EvaluadorStylist.calcularScore(candidato, tempObjetivo);
-        candidatos.push(candidato);
+        const evaluacion = FitMeEngine.evaluarOutfitCompleto(candidato, { temperatura: tempObjetivo });
+        if (evaluacion.estado !== "INCOMPATIBLE") {
+          candidato.evaluacion = evaluacion;
+          candidato.score = evaluacion.recommendationScore;
+          candidatos.push(candidato);
+        }
       }
     }
 
@@ -250,12 +359,13 @@ document.getElementById('temperatura-input')?.addEventListener('input', (e) => {
   document.getElementById('val-temp').textContent = `${temp}°C`;
   const displayHeader = document.getElementById('val-temp-display');
   if (displayHeader) displayHeader.textContent = `${temp}°C`;
+  BuilderStudio.recalcular();
 });
 
-// Variable global para almacenar temporalmente la imagen procesada
 let fotoBase64Data = "";
+
 // ==========================================
-// 6. PROCESAMIENTO VISUAL (EXTRACCIÓN POR MEDIA PONDERADA DE SATURACIÓN)
+// 6. PROCESAMIENTO VISUAL (MEDIA PONDERADA DE SATURACIÓN)
 // ==========================================
 
 const fotoUpload = document.getElementById('foto-upload');
@@ -283,34 +393,22 @@ fotoUpload?.addEventListener('change', (evento) => {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const pixeles = imageData.data;
 
-      let rSumaPonderada = 0;
-      let gSumaPonderada = 0;
-      let bSumaPonderada = 0;
-      let pesoTotal = 0;
+      let rSumaPonderada = 0, gSumaPonderada = 0, bSumaPonderada = 0, pesoTotal = 0;
 
       for (let i = 0; i < pixeles.length; i += 4) {
-        const r = pixeles[i];
-        const g = pixeles[i + 1];
-        const b = pixeles[i + 2];
-        const alpha = pixeles[i + 3];
-
+        const r = pixeles[i], g = pixeles[i + 1], b = pixeles[i + 2], alpha = pixeles[i + 3];
         if (alpha < 125) continue;
 
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        const delta = max - min;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
         const brillo = (r * 299 + g * 587 + b * 114) / 1000;
         const saturacion = max === 0 ? 0 : delta / max;
 
-        // Descartar fondos muy claros, sombras oscuras y neutros
         const esFondoOBrillo = brillo > 215;
         const esSombraPura = brillo < 12;
         const esMuyNeutro = saturacion < 0.10 && brillo > 70;
 
         if (!esFondoOBrillo && !esSombraPura && !esMuyNeutro) {
-          // El peso crece exponencialmente con la saturación
           const peso = Math.pow(saturacion, 2);
-
           rSumaPonderada += r * peso;
           gSumaPonderada += g * peso;
           bSumaPonderada += b * peso;
@@ -323,12 +421,10 @@ fotoUpload?.addEventListener('change', (evento) => {
         const gFinal = Math.round(gSumaPonderada / pesoTotal);
         const bFinal = Math.round(bSumaPonderada / pesoTotal);
 
-        const rgbToHex = (r, g, b) => {
-          return "#" + [r, g, b].map(x => {
-            const hex = Math.min(255, Math.max(0, x)).toString(16);
-            return hex.length === 1 ? "0" + hex : hex;
-          }).join("").toUpperCase();
-        };
+        const rgbToHex = (r, g, b) => "#" + [r, g, b].map(x => {
+          const hex = Math.min(255, Math.max(0, x)).toString(16);
+          return hex.length === 1 ? "0" + hex : hex;
+        }).join("").toUpperCase();
 
         const hexDetectado = rgbToHex(rFinal, gFinal, bFinal);
         if (colorInput) colorInput.value = hexDetectado;
@@ -338,6 +434,7 @@ fotoUpload?.addEventListener('change', (evento) => {
 
   reader.readAsDataURL(archivo);
 });
+
 // Guardado del formulario
 document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -352,7 +449,7 @@ document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
     material: document.getElementById('material').value,
     temporada: document.getElementById('temporada').value,
     colorHex: document.getElementById('color').value,
-    foto: fotoBase64Data, // Almacenamos la imagen cargada
+    foto: fotoBase64Data,
     formalidad: document.getElementById('formalidad').value,
     cargaVisual: document.getElementById('carga_visual').value,
     nivelAbrigo: document.getElementById('abrigo').value,
@@ -364,11 +461,11 @@ document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
   Armario.guardar(nuevaPrenda);
   
   e.target.reset();
-  fotoBase64Data = ""; // Limpiamos la imagen temporal
+  fotoBase64Data = "";
   if (selectTipo) selectTipo.disabled = true;
 });
 
-// Botón de generación
+// Generación con botón
 document.getElementById('btn-generar')?.addEventListener('click', () => {
   const tempInput = document.getElementById('temperatura-input');
   const tempActual = tempInput ? parseInt(tempInput.value) : 18;
@@ -377,15 +474,15 @@ document.getElementById('btn-generar')?.addEventListener('click', () => {
   if (mejorOutfit) {
     mostrarOutfit(mejorOutfit);
   } else {
-    alert('Necesitas guardar al menos 1 Capa interna, 1 Parte inferior y 1 Calzado en tu colección para generar combinaciones.');
+    alert('Se requieren piezas compatibles (Capa interna, Parte inferior y Calzado) para sugerir combinaciones.');
   }
 });
 
 function mostrarOutfit(outfit) {
   const containerResult = document.getElementById('outfit-result');
   const listContainer = document.getElementById('outfit-prendas-list');
-  const formalidadSpan = document.getElementById('outfit-formalidad');
   const scoreSpan = document.getElementById('outfit-score');
+  const explicacionText = document.getElementById('outfit-explicacion');
 
   if (!containerResult || !listContainer) return;
 
@@ -404,17 +501,27 @@ function mostrarOutfit(outfit) {
     listContainer.appendChild(item);
   });
 
-  if (formalidadSpan) formalidadSpan.textContent = outfit.formalidadPromedio;
-  if (scoreSpan) scoreSpan.textContent = outfit.score || '90';
+  const evaluacion = outfit.evaluacion || FitMeEngine.evaluarOutfitCompleto(outfit, { temperatura: 18 });
+
+  if (scoreSpan) scoreSpan.textContent = evaluacion.recommendationScore;
+  if (explicacionText) explicacionText.textContent = evaluacion.explicacion;
+
+  const elCompat = document.getElementById('metric-compat');
+  const elColor = document.getElementById('metric-color-val');
+  const elClima = document.getElementById('metric-clima-val');
+
+  if (elCompat) elCompat.textContent = evaluacion.compatibilityScore;
+  if (elColor) elColor.textContent = evaluacion.desglose.color;
+  if (elClima) elClima.textContent = evaluacion.desglose.clima;
+
   containerResult.style.display = 'block';
 }
 
 // ==========================================
-// 7. CONSTRUCTOR MANUAL Y EVALUACIÓN EN TIEMPO REAL
+// 7. STUDIO BUILDER (CONSTRUCTOR MANUAL)
 // ==========================================
 
 const BuilderStudio = {
-  // Estado actual de la composición manual
   slots: {
     "Capa interna": null,
     "Capa media": null,
@@ -423,7 +530,6 @@ const BuilderStudio = {
     "Calzado": null
   },
 
-  // Inicializa y puebla los desplegables según las prendas guardadas en el Armario
   poblarSelects() {
     const mapeoSelects = {
       "Capa interna": document.getElementById('slot-interna'),
@@ -433,7 +539,6 @@ const BuilderStudio = {
       "Calzado": document.getElementById('slot-calzado')
     };
 
-    // Limpiar y reiniciar opciones
     for (const [categoria, selectEl] of Object.entries(mapeoSelects)) {
       if (!selectEl) continue;
 
@@ -442,7 +547,6 @@ const BuilderStudio = {
         ? '<option value="">-- Ninguna --</option>' 
         : '<option value="">-- Sin seleccionar --</option>';
 
-      // Filtrar prendas del armario pertenecientes a esta categoría
       const prendasCat = Armario.prendas.filter(p => p.categoria === categoria || (categoria === 'Parte inferior' && p.categoria === 'Pantalón'));
 
       prendasCat.forEach(p => {
@@ -454,12 +558,10 @@ const BuilderStudio = {
     }
   },
 
-  // Obtiene el arreglo de objetos Prenda seleccionados actualmente
   getPrendasSeleccionadas() {
     return Object.values(this.slots).filter(p => p !== null);
   },
 
-  // Actualiza los cálculos matemáticos y la vista
   recalcular() {
     const prendasActuales = this.getPrendasSeleccionadas();
     const stackContainer = document.getElementById('builder-stack');
@@ -476,7 +578,6 @@ const BuilderStudio = {
       return;
     }
 
-    // Renderizar lista visual de prendas apiladas
     prendasActuales.forEach(p => {
       const item = document.createElement('div');
       item.className = 'layer-item';
@@ -490,23 +591,21 @@ const BuilderStudio = {
       stackContainer.appendChild(item);
     });
 
-    // Obtener la temperatura global establecida en la interfaz
     const tempInput = document.getElementById('temperatura-input');
     const tempActual = tempInput ? parseInt(tempInput.value) : 18;
 
-    // Calcular evaluaciones usando el motor EvaluadorStylist
-    const scoreColor = EvaluadorStylist.evaluarColor(prendasActuales);
-    const scoreClima = EvaluadorStylist.evaluarClima(prendasActuales, tempActual);
-    const scoreGlobal = Math.round((scoreColor * 0.4) + (scoreClima * 0.6));
+    const outfitTemp = new Outfit(Date.now(), prendasActuales);
+    const evaluacion = FitMeEngine.evaluarOutfitCompleto(outfitTemp, { temperatura: tempActual });
 
-    const sumaFormalidad = prendasActuales.reduce((acc, p) => acc + (p.formalidad || 5), 0);
-    const formalidadPromedio = (sumaFormalidad / prendasActuales.length).toFixed(1);
+    this.actualizarMetricas(
+      evaluacion.recommendationScore, 
+      evaluacion.desglose.color, 
+      evaluacion.desglose.clima, 
+      evaluacion.desglose.formalidadPromedio
+    );
 
-    this.actualizarMetricas(scoreGlobal, scoreColor, scoreClima, formalidadPromedio);
-
-    // Habilitar el guardado si al menos tiene la estructura básica (Interna + Inferior + Calzado)
     const tieneBase = this.slots["Capa interna"] && this.slots["Parte inferior"] && this.slots["Calzado"];
-    if (btnGuardar) btnGuardar.disabled = !tieneBase;
+    if (btnGuardar) btnGuardar.disabled = !tieneBase || evaluacion.estado === "INCOMPATIBLE";
   },
 
   actualizarMetricas(match, color, clima, formalidad) {
@@ -521,10 +620,6 @@ const BuilderStudio = {
     if (elFormalidad) elFormalidad.textContent = formalidad;
   }
 };
-
-// ==========================================
-// LISTENERS DEL CONSTRUCTOR
-// ==========================================
 
 const vincularSlot = (elementId, categoria) => {
   document.getElementById(elementId)?.addEventListener('change', (e) => {
@@ -542,7 +637,6 @@ vincularSlot('slot-externa', 'Capa externa');
 vincularSlot('slot-inferior', 'Parte inferior');
 vincularSlot('slot-calzado', 'Calzado');
 
-// Guardar Outfit personalizado
 document.getElementById('btn-guardar-builder')?.addEventListener('click', () => {
   const prendas = BuilderStudio.getPrendasSeleccionadas();
   const ocasion = document.getElementById('slot-ocasion')?.value || 'Casual';
@@ -550,7 +644,6 @@ document.getElementById('btn-guardar-builder')?.addEventListener('click', () => 
   const nuevoOutfit = new Outfit(Date.now(), prendas);
   nuevoOutfit.ocasion = ocasion;
 
-  // Guardar en el historial local de outfits
   const historialOutfits = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
   historialOutfits.push(nuevoOutfit);
   localStorage.setItem('fitme_outfits', JSON.stringify(historialOutfits));
@@ -558,14 +651,12 @@ document.getElementById('btn-guardar-builder')?.addEventListener('click', () => 
   alert('¡Outfit guardado con éxito en tu colección!');
 });
 
-// Actualizar las opciones del constructor al agregar una nueva prenda
 const funcionGuardarOriginal = Armario.guardar.bind(Armario);
 Armario.guardar = function(prenda) {
   funcionGuardarOriginal(prenda);
   BuilderStudio.poblarSelects();
 };
 
-// Carga inicial del Studio Builder
 BuilderStudio.poblarSelects();
 
 // ==========================================
@@ -573,19 +664,16 @@ BuilderStudio.poblarSelects();
 // ==========================================
 
 const Lookbook = {
-  // Carga los outfits guardados desde localStorage
   obtenerGuardados() {
     const raw = localStorage.getItem('fitme_outfits');
     if (!raw) return [];
     
     try {
       const parsed = JSON.parse(raw);
-      // Reconstruimos los objetos Outfit con sus métodos
       return parsed.map(o => {
         const prendasInstanciadas = o.prendas.map(p => new Prenda(p));
         const outfitObj = new Outfit(o.id, prendasInstanciadas);
         outfitObj.ocasion = o.ocasion || 'Casual';
-        outfitObj.score = o.score || EvaluadorStylist.evaluarColor(prendasInstanciadas);
         return outfitObj;
       });
     } catch (e) {
@@ -594,7 +682,6 @@ const Lookbook = {
     }
   },
 
-  // Elimina un outfit por su ID
   eliminar(id) {
     const listaActual = this.obtenerGuardados();
     const listaFiltrada = listaActual.filter(o => o.id !== id);
@@ -602,7 +689,6 @@ const Lookbook = {
     this.render();
   },
 
-  // Renderiza la lista de tarjetas en el DOM
   render() {
     const container = document.getElementById('grid-outfits');
     if (!container) return;
@@ -619,7 +705,6 @@ const Lookbook = {
       const card = document.createElement('div');
       card.className = 'outfit-card-saved';
 
-      // Generar el HTML para cada capa de ropa
       const capasHTML = outfit.prendas.map(p => `
         <div class="layer-item-mini">
           <div class="color-dot" style="background-color: ${p.colorHex || '#000'}"></div>
@@ -650,7 +735,6 @@ const Lookbook = {
       container.appendChild(card);
     });
 
-    // Asignar eventos de eliminación a los botones generados
     container.querySelectorAll('.btn-delete-outfit').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = Number(e.target.getAttribute('data-id'));
@@ -660,17 +744,12 @@ const Lookbook = {
   }
 };
 
-// Modificar la acción de guardar del Studio Builder para refrescar el Lookbook
 document.getElementById('btn-guardar-builder')?.addEventListener('click', () => {
-  // Se da un pequeño margen de tiempo para asegurar que el registro se guardó en localStorage
   setTimeout(() => {
     Lookbook.render();
   }, 100);
 });
 
-// Carga inicial de la galería al abrir la aplicación
-Lookbook.render();
-
-
-// Carga e inicialización
+// Carga inicial
 Armario.render();
+Lookbook.render();

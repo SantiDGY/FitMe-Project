@@ -23,6 +23,8 @@
     <nav class="nav-menu">
       <a href="#curated" class="nav-link active">CURATED</a>
       <a href="#pieces" class="nav-link">PIECES</a>
+      <a href="#builder" class="nav-link">BUILDER</a>
+      <a href="#saved-outfits" class="nav-link">LOOKBOOK</a>
       <a href="#add" class="nav-link">ADD</a>
     </nav>
   </header>
@@ -49,18 +51,30 @@
 
         <button id="btn-generar" class="btn-primary">GENERATE LOOK</button>
 
+        <!-- TARJETA DE RESULTADO CON MOTORES DE DIAGNÓSTICO -->
         <div id="outfit-result" class="outfit-display" style="display: none;">
           <div class="outfit-header">
             <span class="outfit-tag">LOOK PROPOSAL</span>
-            <div class="match-score"><span id="outfit-score">--</span>% MATCH</div>
+            <div class="match-score"><span id="outfit-score">--</span>% RECOMMENDATION</div>
           </div>
           
+          <!-- Explicación en texto natural generada por FitMeEngine -->
+          <p id="outfit-explicacion" class="outfit-explanation-text"></p>
+
           <div id="outfit-prendas-list" class="layers-stack"></div>
 
-          <div class="outfit-footer">
-            <div class="metric">
-              <span class="metric-label">FORMALITY</span>
-              <span class="metric-value"><span id="outfit-formalidad">--</span> / 10</span>
+          <div class="outfit-footer-metrics">
+            <div class="metric-card">
+              <span class="metric-label">COMPATIBILITY</span>
+              <span class="metric-value"><span id="metric-compat">--</span>%</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">COLOR HARMONY</span>
+              <span class="metric-value"><span id="metric-color-val">--</span>/100</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">CLIMATE MATCH</span>
+              <span class="metric-value"><span id="metric-clima-val">--</span>/100</span>
             </div>
           </div>
         </div>
@@ -81,221 +95,223 @@
     <hr class="divider">
 
     <!-- SECCIÓN CONSTRUCTOR MANUAL DE OUTFITS -->
-<section id="builder" class="builder-section">
-  <div class="section-header">
-    <h2 class="editorial-subtitle">STUDIO BUILDER</h2>
-    <span class="subtitle-caption">MANUAL OUTFIT COMPOSITION</span>
-  </div>
-
-  <div class="builder-container">
-    <!-- PANEL IZQUIERDO: SELECCIÓN POR CAPAS -->
-    <div class="builder-controls">
-      <div class="form-group">
-        <label for="slot-interna">CAPA INTERNA</label>
-        <select id="slot-interna" class="builder-select">
-          <option value="">-- Sin seleccionar --</option>
-        </select>
+    <section id="builder" class="builder-section">
+      <div class="section-header">
+        <h2 class="editorial-subtitle">STUDIO BUILDER</h2>
+        <span class="subtitle-caption">MANUAL OUTFIT COMPOSITION</span>
       </div>
 
-      <div class="form-group">
-        <label for="slot-media">CAPA MEDIA (OPCIONAL)</label>
-        <select id="slot-media" class="builder-select">
-          <option value="">-- Ninguna --</option>
-        </select>
-      </div>
+      <div class="builder-container">
+        <!-- PANEL IZQUIERDO: SELECCIÓN POR CAPAS -->
+        <div class="builder-controls">
+          <div class="form-group">
+            <label for="slot-interna">CAPA INTERNA *</label>
+            <select id="slot-interna" class="builder-select">
+              <option value="">-- Sin seleccionar --</option>
+            </select>
+          </div>
 
-      <div class="form-group">
-        <label for="slot-externa">CAPA EXTERNA (OPCIONAL)</label>
-        <select id="slot-externa" class="builder-select">
-          <option value="">-- Ninguna --</option>
-        </select>
-      </div>
+          <div class="form-group">
+            <label for="slot-media">CAPA MEDIA (OPCIONAL)</label>
+            <select id="slot-media" class="builder-select">
+              <option value="">-- Ninguna --</option>
+            </select>
+          </div>
 
-      <div class="form-group">
-        <label for="slot-inferior">PARTE INFERIOR *</label>
-        <select id="slot-inferior" class="builder-select">
-          <option value="">-- Sin seleccionar --</option>
-        </select>
-      </div>
+          <div class="form-group">
+            <label for="slot-externa">CAPA EXTERNA (OPCIONAL)</label>
+            <select id="slot-externa" class="builder-select">
+              <option value="">-- Ninguna --</option>
+            </select>
+          </div>
 
-      <div class="form-group">
-        <label for="slot-calzado">CALZADO *</label>
-        <select id="slot-calzado" class="builder-select">
-          <option value="">-- Sin seleccionar --</option>
-        </select>
-      </div>
+          <div class="form-group">
+            <label for="slot-inferior">PARTE INFERIOR *</label>
+            <select id="slot-inferior" class="builder-select">
+              <option value="">-- Sin seleccionar --</option>
+            </select>
+          </div>
 
-      <div class="form-group">
-        <label for="slot-ocasion">OCASIÓN DE USO</label>
-        <select id="slot-ocasion">
-          <option value="Casual">Casual / Diario</option>
-          <option value="Merienda">Merienda / Salida</option>
-          <option value="Trabajo">Trabajo / Estudio</option>
-          <option value="Noche">Noche / Bar</option>
-          <option value="Formal">Evento Formal</option>
-        </select>
-      </div>
-    </div>
+          <div class="form-group">
+            <label for="slot-calzado">CALZADO *</label>
+            <select id="slot-calzado" class="builder-select">
+              <option value="">-- Sin seleccionar --</option>
+            </select>
+          </div>
 
-    <!-- PANEL DERECHO: VISTA PREVIA Y SCORE EN TIEMPO REAL -->
-    <div class="builder-preview">
-      <div class="preview-header">
-        <span class="outfit-tag">COMPOSITION ANALYSIS</span>
-        <div class="match-score"><span id="builder-match">0</span>% MATCH</div>
-      </div>
-
-      <div id="builder-stack" class="layers-stack">
-        <p class="empty-msg">Selecciona prendas para iniciar la composición.</p>
-      </div>
-
-      <!-- METRICAS EN TIEMPO REAL -->
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <span class="metric-label">COLOR HARMONY</span>
-          <span class="metric-value"><span id="metric-color">0</span>/100</span>
+          <div class="form-group">
+            <label for="slot-ocasion">OCASIÓN DE USO</label>
+            <select id="slot-ocasion">
+              <option value="Casual">Casual / Diario</option>
+              <option value="Merienda">Merienda / Salida</option>
+              <option value="Trabajo">Trabajo / Estudio</option>
+              <option value="Noche">Noche / Bar</option>
+              <option value="Formal">Evento Formal</option>
+            </select>
+          </div>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">WEATHER ADEQUACY</span>
-          <span class="metric-value"><span id="metric-clima">0</span>/100</span>
-        </div>
-        <div class="metric-card">
-          <span class="metric-label">FORMALITY AVG</span>
-          <span class="metric-value"><span id="metric-formalidad">0</span>/10</span>
+
+        <!-- PANEL DERECHO: VISTA PREVIA Y SCORE EN TIEMPO REAL -->
+        <div class="builder-preview">
+          <div class="preview-header">
+            <span class="outfit-tag">COMPOSITION ANALYSIS</span>
+            <div class="match-score"><span id="builder-match">0</span>% MATCH</div>
+          </div>
+
+          <div id="builder-stack" class="layers-stack">
+            <p class="empty-msg">Selecciona prendas para iniciar la composición.</p>
+          </div>
+
+          <!-- METRICAS EN TIEMPO REAL -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">COLOR HARMONY</span>
+              <span class="metric-value"><span id="metric-color">0</span>/100</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">WEATHER ADEQUACY</span>
+              <span class="metric-value"><span id="metric-clima">0</span>/100</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">FORMALITY AVG</span>
+              <span class="metric-value"><span id="metric-formalidad">0</span>/10</span>
+            </div>
+          </div>
+
+          <button id="btn-guardar-builder" class="btn-primary" disabled>SAVE OUTFIT TO ARCHIVE</button>
         </div>
       </div>
+    </section>
 
-      <button id="btn-guardar-builder" class="btn-primary" disabled>SAVE OUTFIT TO ARCHIVE</button>
-    </div>
-  </div>
-</section>
+    <hr class="divider">
 
-<!-- SECCIÓN HISTORIAL DE OUTFITS GUARDADOS -->
-<section id="saved-outfits" class="saved-section">
-  <div class="section-header">
-    <h2 class="editorial-subtitle">LOOKBOOK</h2>
-    <span class="subtitle-caption">SAVED COMBINATIONS</span>
-  </div>
+    <!-- SECCIÓN HISTORIAL DE OUTFITS GUARDADOS -->
+    <section id="saved-outfits" class="saved-section">
+      <div class="section-header">
+        <h2 class="editorial-subtitle">LOOKBOOK</h2>
+        <span class="subtitle-caption">SAVED COMBINATIONS</span>
+      </div>
 
-  <div id="grid-outfits" class="grid-container-outfits">
-    <p class="empty-msg">No hay outfits guardados aún. Usa el Studio Builder o el Generador para guardar tus combinaciones.</p>
-  </div>
-</section>
+      <div id="grid-outfits" class="grid-container-outfits">
+        <p class="empty-msg">No hay outfits guardados aún. Usa el Studio Builder o el Generador para guardar tus combinaciones.</p>
+      </div>
+    </section>
+
+    <hr class="divider">
 
     <!-- SECCIÓN AGREGAR PRENDA EXTENDIDA -->
-<section id="add" class="form-section">
-  <div class="section-header">
-    <h2 class="editorial-subtitle">NEW PIECE</h2>
-    <span class="subtitle-caption">FULL ARCHIVE ENTRY</span>
-  </div>
+    <section id="add" class="form-section">
+      <div class="section-header">
+        <h2 class="editorial-subtitle">NEW PIECE</h2>
+        <span class="subtitle-caption">FULL ARCHIVE ENTRY</span>
+      </div>
 
-  <form id="prenda-form" class="editorial-form">
-    <div class="form-row">
-      <div class="form-group">
-        <label for="nombre">ITEM NAME *</label>
-        <input type="text" id="nombre" placeholder="e.g. Harrington Sand" required>
-      </div>
-      <div class="form-group">
-        <label for="marca">BRAND</label>
-        <input type="text" id="marca" placeholder="e.g. Zara, Nike, Vintage">
-      </div>
-    </div>
+      <form id="prenda-form" class="editorial-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">ITEM NAME *</label>
+            <input type="text" id="nombre" placeholder="e.g. Harrington Sand" required>
+          </div>
+          <div class="form-group">
+            <label for="marca">BRAND</label>
+            <input type="text" id="marca" placeholder="e.g. Zara, Nike, Vintage">
+          </div>
+        </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label for="categoria">CATEGORY *</label>
-        <select id="categoria" required>
-          <option value="" disabled selected>Select category...</option>
-          <option value="Capa interna">Capa interna</option>
-          <option value="Capa media">Capa media</option>
-          <option value="Capa externa">Capa externa</option>
-          <option value="Parte inferior">Parte inferior</option>
-          <option value="Calzado">Calzado</option>
-          <option value="Accesorios">Accesorios</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="tipo_especifico">SPECIFIC TYPE *</label>
-        <select id="tipo_especifico" required disabled>
-          <option value="" disabled selected>Select category first...</option>
-        </select>
-      </div>
-    </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="categoria">CATEGORY *</label>
+            <select id="categoria" required>
+              <option value="" disabled selected>Select category...</option>
+              <option value="Capa interna">Capa interna</option>
+              <option value="Capa media">Capa media</option>
+              <option value="Capa externa">Capa externa</option>
+              <option value="Parte inferior">Parte inferior</option>
+              <option value="Calzado">Calzado</option>
+              <option value="Accesorios">Accesorios</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="tipo_especifico">SPECIFIC TYPE *</label>
+            <select id="tipo_especifico" required disabled>
+              <option value="" disabled selected>Select category first...</option>
+            </select>
+          </div>
+        </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label for="material">MATERIAL / FABRIC</label>
-        <select id="material">
-          <option value="Algodón">Algodón</option>
-          <option value="Denim">Denim</option>
-          <option value="Sarga">Sarga</option>
-          <option value="Lana">Lana</option>
-          <option value="Lino">Lino</option>
-          <option value="Nylon">Nylon</option>
-          <option value="Cuero">Cuero</option>
-          <option value="Sintético">Sintético</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="temporada">SEASON</label>
-        <select id="temporada">
-          <option value="Todas">Todas las temporadas</option>
-          <option value="Verano">Verano</option>
-          <option value="Invierno">Invierno</option>
-          <option value="Entretiempo">Entretiempo</option>
-        </select>
-      </div>
-    </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="material">MATERIAL / FABRIC</label>
+            <select id="material">
+              <option value="Algodón">Algodón</option>
+              <option value="Denim">Denim</option>
+              <option value="Sarga">Sarga</option>
+              <option value="Lana">Lana</option>
+              <option value="Lino">Lino</option>
+              <option value="Nylon">Nylon</option>
+              <option value="Cuero">Cuero</option>
+              <option value="Sintético">Sintético</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="temporada">SEASON</label>
+            <select id="temporada">
+              <option value="Todas">Todas las temporadas</option>
+              <option value="Verano">Verano</option>
+              <option value="Invierno">Invierno</option>
+              <option value="Entretiempo">Entretiempo</option>
+            </select>
+          </div>
+        </div>
 
-    <!-- Reemplaza el form-group de la foto por este bloque -->
-<div class="form-row">
-  <div class="form-group">
-    <label for="color">MAIN COLOR (HEX) *</label>
-    <input type="color" id="color" value="#1b365d" class="color-picker-input">
-  </div>
-  <div class="form-group">
-    <label for="foto-upload">UPLOAD PHOTO</label>
-    <!-- accept="image/*" asegura que solo se puedan subir imágenes -->
-    <input type="file" id="foto-upload" accept="image/*" class="file-upload-input">
-  </div>
-</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="color">MAIN COLOR (HEX) *</label>
+            <input type="color" id="color" value="#1b365d" class="color-picker-input">
+          </div>
+          <div class="form-group">
+            <label for="foto-upload">UPLOAD PHOTO</label>
+            <input type="file" id="foto-upload" accept="image/*" class="file-upload-input">
+          </div>
+        </div>
 
-<!-- Canvas oculto para procesar los píxeles con JavaScript -->
-<canvas id="image-canvas" style="display: none;"></canvas>
+        <!-- Canvas oculto para procesamiento digital de píxeles -->
+        <canvas id="image-canvas" style="display: none;"></canvas>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label for="formalidad">FORMALITY: <span id="val-formalidad">5</span>/10</label>
-        <input type="range" id="formalidad" min="1" max="10" value="5">
-      </div>
-      <div class="form-group">
-        <label for="carga_visual">VISUAL WEIGHT: <span id="val-carga">3</span>/10</label>
-        <input type="range" id="carga_visual" min="1" max="10" value="3">
-      </div>
-      <div class="form-group">
-        <label for="abrigo">WARMTH: <span id="val-abrigo">5</span>/10</label>
-        <input type="range" id="abrigo" min="1" max="10" value="5">
-      </div>
-    </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formalidad">FORMALITY: <span id="val-formalidad">5</span>/10</label>
+            <input type="range" id="formalidad" min="1" max="10" value="5">
+          </div>
+          <div class="form-group">
+            <label for="carga_visual">VISUAL WEIGHT: <span id="val-carga">3</span>/10</label>
+            <input type="range" id="carga_visual" min="1" max="10" value="3">
+          </div>
+          <div class="form-group">
+            <label for="abrigo">WARMTH: <span id="val-abrigo">5</span>/10</label>
+            <input type="range" id="abrigo" min="1" max="10" value="5">
+          </div>
+        </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label for="estado">STATUS</label>
-        <select id="estado">
-          <option value="disponible">Disponible</option>
-          <option value="lavar">En lavado</option>
-          <option value="guardar">Guardado / Fuera de temporada</option>
-        </select>
-      </div>
-      <div class="form-group checkbox-group">
-        <label for="favorita">
-          <input type="checkbox" id="favorita"> FAVORITE PIECE
-        </label>
-      </div>
-    </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="estado">STATUS</label>
+            <select id="estado">
+              <option value="disponible">Disponible</option>
+              <option value="lavar">En lavado</option>
+              <option value="guardar">Guardado / Fuera de temporada</option>
+            </select>
+          </div>
+          <div class="form-group checkbox-group">
+            <label for="favorita">
+              <input type="checkbox" id="favorita"> FAVORITE PIECE
+            </label>
+          </div>
+        </div>
 
-    <button type="submit" class="btn-secondary">SAVE TO ARCHIVE</button>
-  </form>
-</section>
+        <button type="submit" class="btn-secondary">SAVE TO ARCHIVE</button>
+      </form>
+    </section>
 
   </main>
 
