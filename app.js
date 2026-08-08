@@ -1,5 +1,5 @@
 // ==========================================
-// 1. DICCIONARIO DE CATEGORÍAS Y TIPOS
+// 1. DICCIONARIOS DE CONFIGURACIÓN Y PERFILES
 // ==========================================
 
 const TIPOS_POR_CATEGORIA = {
@@ -9,6 +9,15 @@ const TIPOS_POR_CATEGORIA = {
   "Parte inferior": ["Jean", "Cargo", "Baggy", "Barrel", "Straight", "Short", "Chino"],
   "Calzado": ["Sneaker", "Bota", "Loafer", "Zapato", "Sandalia"],
   "Accesorios": ["Cadena", "Cinturón", "Gorra", "Gorro", "Bufanda", "Reloj", "Anillo"]
+};
+
+// Diccionario global de perfiles por ocasión de uso
+const PERFILES_OCASION = {
+  "Casual": { formalidadMin: 1, formalidadMax: 5, cargaMax: 8, estilosFav: ["casual", "minimalista", "streetwear"] },
+  "Merienda": { formalidadMin: 3, formalidadMax: 7, cargaMax: 7, estilosFav: ["casual", "preppy", "old_money"] },
+  "Trabajo": { formalidadMin: 5, formalidadMax: 9, cargaMax: 5, estilosFav: ["formal", "minimalista", "preppy"] },
+  "Noche": { formalidadMin: 4, formalidadMax: 8, cargaMax: 9, estilosFav: ["streetwear", "casual", "night"] },
+  "Formal": { formalidadMin: 7, formalidadMax: 10, cargaMax: 4, estilosFav: ["formal", "old_money"] }
 };
 
 // ==========================================
@@ -755,21 +764,19 @@ document.getElementById('btn-guardar-builder')?.addEventListener('click', () => 
 // ==========================================
 
 const GeneradorSorprendeme = {
-  looksActuales: [], // Almacena los 3 looks desplegados actualmente
+  looksActuales: [],
 
-  // Genera N candidatos únicos y retorna los mejores puntuados
   generarLoteDeLooks(cantidad = 3) {
     const tempInput = document.getElementById('temperatura-input');
     const tempActual = tempInput ? parseInt(tempInput.value) : 18;
     const candidatos = [];
-    const INTENTOS = 50; // Muestra aleatoria amplia (Monte Carlo)
+    const INTENTOS = 50;
 
     for (let i = 0; i < INTENTOS; i++) {
       const candidato = OutfitGenerator.generarAleatorio(Armario.prendas);
       if (candidato) {
         const evaluacion = FitMeEngine.evaluarOutfitCompleto(candidato, { temperatura: tempActual });
         
-        // Solo aceptamos candidatos que pasen las reglas duras
         if (evaluacion.estado !== "INCOMPATIBLE") {
           candidato.evaluacion = evaluacion;
           candidato.score = evaluacion.recommendationScore;
@@ -780,15 +787,12 @@ const GeneradorSorprendeme = {
 
     if (candidatos.length === 0) return [];
 
-    // Ordenar por mejor puntuación
     candidatos.sort((a, b) => b.score - a.score);
 
-    // Desduplicar prendas exactas y tomar los top candidatos
     const seleccionados = [];
     for (const cand of candidatos) {
       if (seleccionados.length >= cantidad) break;
       
-      // Validar que no sea exactamente idéntico a uno ya seleccionado
       const idsActuales = cand.prendas.map(p => p.id).sort().join(',');
       const yaExiste = seleccionados.some(s => s.prendas.map(p => p.id).sort().join(',') === idsActuales);
 
@@ -800,7 +804,6 @@ const GeneradorSorprendeme = {
     return seleccionados;
   },
 
-  // Inicia la generación de las 3 tarjetas
   ejecutar() {
     const container = document.getElementById('multi-outfits-container');
     if (!container) return;
@@ -816,10 +819,8 @@ const GeneradorSorprendeme = {
     this.render();
   },
 
-  // Reemplaza un solo look si el usuario presiona "Regenerar" o "No me gusta"
   regenerarUno(index) {
     const nuevos = this.generarLoteDeLooks(5);
-    // Buscar uno que no esté actualmente en pantalla
     const idsEnPantalla = this.looksActuales.map(l => l ? l.prendas.map(p => p.id).sort().join(',') : '');
     
     const reemplazo = nuevos.find(n => {
@@ -835,7 +836,6 @@ const GeneradorSorprendeme = {
     }
   },
 
-  // Renderiza las 3 tarjetas interactivas
   render() {
     const container = document.getElementById('multi-outfits-container');
     if (!container) return;
@@ -880,13 +880,11 @@ const GeneradorSorprendeme = {
       container.appendChild(card);
     });
 
-    // Asignar listeners a los botones de acción
     container.querySelectorAll('.btn-like').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const idx = Number(e.target.getAttribute('data-index'));
         const outfitAGuardar = this.looksActuales[idx];
         
-        // Guardar en el Lookbook
         const historial = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
         historial.push(outfitAGuardar);
         localStorage.setItem('fitme_outfits', JSON.stringify(historial));
@@ -912,11 +910,302 @@ const GeneradorSorprendeme = {
   }
 };
 
-// Evento del botón principal "SORPRÉNDEME"
 document.getElementById('btn-sorprendeme')?.addEventListener('click', () => {
   GeneradorSorprendeme.ejecutar();
 });
 
-// Carga inicial
+// ==========================================
+// 10. MÓDULO PRENDA PROTAGONISTA (HERO PIECE)
+// ==========================================
+
+const HeroPieceStylist = {
+  heroPrendaSeleccionada: null,
+  outfitHeroActual: null,
+
+  poblarSelectorHero() {
+    const selectEl = document.getElementById('select-hero-item');
+    if (!selectEl) return;
+
+    selectEl.innerHTML = '<option value="">-- Elige una pieza de tu armario --</option>';
+
+    Armario.prendas.forEach(p => {
+      const option = document.createElement('option');
+      option.value = p.id;
+      option.textContent = `${p.nombre} (${p.categoria} - ${p.colorHex})`;
+      selectEl.appendChild(option);
+    });
+  },
+
+  generarAlrededorDe(heroPrenda) {
+    const tempInput = document.getElementById('temperatura-input');
+    const tempActual = tempInput ? parseInt(tempInput.value) : 18;
+
+    const candidatos = [];
+    const INTENTOS = 40;
+
+    for (let i = 0; i < INTENTOS; i++) {
+      const internas = Armario.prendas.filter(p => p.categoria === 'Capa interna');
+      const pantalones = Armario.prendas.filter(p => p.categoria === 'Parte inferior' || p.categoria === 'Pantalón');
+      const calzados = Armario.prendas.filter(p => p.categoria === 'Calzado');
+      const externas = Armario.prendas.filter(p => p.categoria === 'Capa externa');
+
+      if (internas.length === 0 || pantalones.length === 0 || calzados.length === 0) continue;
+
+      let pInterna = heroPrenda.categoria === 'Capa interna' ? heroPrenda : internas[Math.floor(Math.random() * internas.length)];
+      let pPantalon = (heroPrenda.categoria === 'Parte inferior' || heroPrenda.categoria === 'Pantalón') ? heroPrenda : pantalones[Math.floor(Math.random() * pantalones.length)];
+      let pCalzado = heroPrenda.categoria === 'Calzado' ? heroPrenda : calzados[Math.floor(Math.random() * calzados.length)];
+
+      const seleccion = [pInterna, pPantalon, pCalzado];
+
+      if (heroPrenda.categoria === 'Capa externa') {
+        seleccion.push(heroPrenda);
+      } else if (externas.length > 0 && Math.random() > 0.6) {
+        seleccion.push(externas[Math.floor(Math.random() * externas.length)]);
+      }
+
+      const candidatoOutfit = new Outfit(Date.now(), seleccion);
+      const evaluacion = FitMeEngine.evaluarOutfitCompleto(candidatoOutfit, { temperatura: tempActual });
+
+      if (evaluacion.estado !== "INCOMPATIBLE") {
+        let bonusBalance = 0;
+        const secundarias = seleccion.filter(p => p.id !== heroPrenda.id);
+        const cargaSecundariasPromedio = secundarias.reduce((acc, p) => acc + (p.cargaVisual || 3), 0) / secundarias.length;
+
+        if (heroPrenda.cargaVisual >= 6 && cargaSecundariasPromedio <= 4) {
+          bonusBalance = 15;
+        }
+
+        candidatoOutfit.evaluacion = evaluacion;
+        candidatoOutfit.score = Math.min(100, evaluacion.recommendationScore + bonusBalance);
+        candidatos.push(candidatoOutfit);
+      }
+    }
+
+    if (candidatos.length === 0) return null;
+
+    candidatos.sort((a, b) => b.score - a.score);
+    return candidatos[0];
+  },
+
+  ejecutar() {
+    if (!this.heroPrendaSeleccionada) return;
+
+    const mejorOutfit = this.generarAlrededorDe(this.heroPrendaSeleccionada);
+    if (!mejorOutfit) {
+      alert('No se encontraron combinaciones suficientes en tu armario para destacar esta prenda.');
+      return;
+    }
+
+    this.outfitHeroActual = mejorOutfit;
+
+    const container = document.getElementById('hero-outfit-result');
+    const adviceText = document.getElementById('hero-stylist-advice');
+    const scoreText = document.getElementById('hero-match-score');
+    const stackContainer = document.getElementById('hero-prendas-stack');
+
+    if (!container || !stackContainer) return;
+
+    let consejo = `Protagonista: ${this.heroPrendaSeleccionada.nombre.toUpperCase()}.`;
+    if (this.heroPrendaSeleccionada.cargaVisual >= 6) {
+      consejo += " Manteniendo una baja carga visual en las prendas secundarias para que la pieza principal sea el punto focal indiscutible.";
+    } else {
+      consejo += " La prenda se integra fluidamente con elementos de soporte cromático equivalente.";
+    }
+
+    if (adviceText) adviceText.textContent = consejo;
+    if (scoreText) scoreText.textContent = mejorOutfit.score;
+
+    stackContainer.innerHTML = '';
+    mejorOutfit.prendas.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'layer-item';
+      if (p.id === this.heroPrendaSeleccionada.id) {
+        item.style.borderLeft = `5px solid ${p.colorHex || '#000'}`;
+        item.style.background = 'var(--card-bg)';
+      } else {
+        item.style.borderLeftColor = p.colorHex || '#000';
+      }
+
+      item.innerHTML = `
+        <div>
+          <div class="layer-category">${p.categoria} ${p.id === this.heroPrendaSeleccionada.id ? '★ HERO' : ''}</div>
+          <div class="layer-name">${p.nombre}</div>
+        </div>
+      `;
+      stackContainer.appendChild(item);
+    });
+
+    container.style.display = 'block';
+  }
+};
+
+document.getElementById('select-hero-item')?.addEventListener('change', (e) => {
+  const idPrenda = e.target.value;
+  const btnGenerar = document.getElementById('btn-generar-hero');
+  
+  HeroPieceStylist.heroPrendaSeleccionada = idPrenda 
+    ? Armario.prendas.find(p => p.id == idPrenda) || null 
+    : null;
+
+  if (btnGenerar) {
+    btnGenerar.disabled = !HeroPieceStylist.heroPrendaSeleccionada;
+  }
+});
+
+document.getElementById('btn-generar-hero')?.addEventListener('click', () => {
+  HeroPieceStylist.ejecutar();
+});
+
+document.getElementById('btn-guardar-hero-outfit')?.addEventListener('click', () => {
+  if (!HeroPieceStylist.outfitHeroActual) return;
+
+  const historial = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
+  historial.push(HeroPieceStylist.outfitHeroActual);
+  localStorage.setItem('fitme_outfits', JSON.stringify(historial));
+
+  alert('¡Outfit protagonista guardado con éxito en tu Lookbook!');
+  Lookbook.render();
+});
+
+const guardarOriginalHero = Armario.guardar.bind(Armario);
+Armario.guardar = function(prenda) {
+  guardarOriginalHero(prenda);
+  HeroPieceStylist.poblarSelectorHero();
+};
+
+HeroPieceStylist.poblarSelectorHero();
+
+// ==========================================
+// 11. MÓDULO BÚSQUEDA DESDE CERO (CONTEXT STYLIST)
+// ==========================================
+
+const SearchOutfitStylist = {
+  
+  mapearClimaATemperatura(clima) {
+    switch (clima) {
+      case 'frio': return 8;
+      case 'caluroso': return 28;
+      case 'templado':
+      default: return 18;
+    }
+  },
+
+  cumplePaletaColor(prenda, paleta) {
+    if (paleta === 'todas') return true;
+
+    const { hue, saturation, lightness } = prenda;
+
+    if (paleta === 'neutra') {
+      return saturation < 20 || lightness > 85 || lightness < 15;
+    }
+
+    if (paleta === 'tierra') {
+      const esTierraHue = hue >= 10 && hue <= 85;
+      const esLuminosidadMedia = lightness >= 20 && lightness <= 75;
+      return esTierraHue && esLuminosidadMedia;
+    }
+
+    if (paleta === 'fria') {
+      return hue >= 160 && hue <= 260;
+    }
+
+    return true;
+  },
+
+  buscar() {
+    const estilo = document.getElementById('search-estilo')?.value || 'todos';
+    const ocasion = document.getElementById('search-ocasion')?.value || 'Casual';
+    const clima = document.getElementById('search-clima')?.value || 'templado';
+    const paleta = document.getElementById('search-paleta')?.value || 'todas';
+
+    const tempTarget = this.mapearClimaATemperatura(clima);
+    const perfilOcasion = PERFILES_OCASION[ocasion] || PERFILES_OCASION["Casual"];
+
+    const prendasValidas = Armario.prendas.filter(p => this.cumplePaletaColor(p, paleta));
+
+    const candidatos = [];
+    const INTENTOS = 60;
+
+    for (let i = 0; i < INTENTOS; i++) {
+      const candidato = OutfitGenerator.generarAleatorio(prendasValidas);
+      if (candidato) {
+        const evaluacion = FitMeEngine.evaluarOutfitCompleto(candidato, { temperatura: tempTarget });
+
+        const formalidadProm = parseFloat(evaluacion.desglose.formalidadPromedio);
+        const cumpleFormalidad = formalidadProm >= perfilOcasion.formalidadMin && formalidadProm <= perfilOcasion.formalidadMax;
+
+        if (evaluacion.estado !== "INCOMPATIBLE" && cumpleFormalidad) {
+          candidato.evaluacion = evaluacion;
+          candidato.ocasion = ocasion;
+          candidato.score = evaluacion.recommendationScore;
+          candidatos.push(candidato);
+        }
+      }
+    }
+
+    const container = document.getElementById('search-results-grid');
+    if (!container) return;
+
+    if (candidatos.length === 0) {
+      container.style.display = 'block';
+      container.innerHTML = `<p class="empty-msg">No se encontraron outfits que cumplan con todos los criterios de la búsqueda en tu armario actual. Intenta flexibilizar la paleta de colores o el clima.</p>`;
+      return;
+    }
+
+    candidatos.sort((a, b) => b.score - a.score);
+    const mejoresTres = candidatos.slice(0, 3);
+
+    container.style.display = 'grid';
+    container.innerHTML = '';
+
+    mejoresTres.forEach((outfit, index) => {
+      const card = document.createElement('div');
+      card.className = 'outfit-card-saved';
+
+      const capasHTML = outfit.prendas.map(p => `
+        <div class="layer-item-mini">
+          <div class="color-dot" style="background-color: ${p.colorHex || '#000'}"></div>
+          <span class="layer-name">${p.nombre}</span>
+          <span class="layer-cat-mini">${p.categoria}</span>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="outfit-card-header">
+          <span class="outfit-number">MATCH #${String(index + 1).padStart(2, '0')}</span>
+          <span class="match-score">${outfit.score}% MATCH</span>
+        </div>
+
+        <p class="outfit-explanation-text" style="font-size: 0.75rem; margin-bottom: 8px;">
+          ${outfit.evaluacion.explicacion}
+        </p>
+
+        <div class="layers-stack-saved">
+          ${capasHTML}
+        </div>
+
+        <button class="btn-primary btn-save-search" data-index="${index}" style="margin-top: 8px;">
+          SAVE TO LOOKBOOK
+        </button>
+      `;
+
+      container.appendChild(card);
+
+      card.querySelector('.btn-save-search').addEventListener('click', () => {
+        const historial = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
+        historial.push(outfit);
+        localStorage.setItem('fitme_outfits', JSON.stringify(historial));
+        alert('¡Outfit guardado en tu Lookbook con éxito!');
+        Lookbook.render();
+      });
+    });
+  }
+};
+
+document.getElementById('btn-buscar-outfit')?.addEventListener('click', () => {
+  SearchOutfitStylist.buscar();
+});
+
+// Carga e inicialización global
 Armario.render();
 Lookbook.render();

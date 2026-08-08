@@ -604,3 +604,22 @@ button:disabled {
   border-color: #e63946;
   color: #e63946;
 }
+
+/* HERO PIECE SECTION */
+.hero-piece-container {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  margin-top: var(--spacing-md);
+}
+
+/* CONTEXT STYLIST / SEARCH SECTION */
+.search-container {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  margin-top: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}

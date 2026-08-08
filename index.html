@@ -176,6 +176,107 @@
 
     <hr class="divider">
 
+    <!-- SECCIÓN PRENDA PROTAGONISTA -->
+<section id="hero-piece-section" class="hero-piece-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">HERO PIECE STYLIST</h2>
+    <span class="subtitle-caption">BUILD AROUND A STATEMENT ITEM</span>
+  </div>
+
+  <div class="hero-piece-container">
+    <div class="form-group">
+      <label for="select-hero-item">SELECCIONA LA PRENDA PROTAGONISTA *</label>
+      <select id="select-hero-item" class="builder-select">
+        <option value="">-- Elige una pieza de tu armario --</option>
+      </select>
+    </div>
+
+    <button id="btn-generar-hero" class="btn-primary" style="margin-top: var(--spacing-sm);" disabled>
+      STYLING AROUND THIS PIECE
+    </button>
+
+    <div id="hero-outfit-result" class="outfit-display" style="display: none;">
+      <div class="outfit-header">
+        <span class="outfit-tag">STATEMENT LOOK PROPOSAL</span>
+        <div class="match-score"><span id="hero-match-score">--</span>% RECOMMENDATION</div>
+      </div>
+
+      <p id="hero-stylist-advice" class="outfit-explanation-text"></p>
+
+      <div id="hero-prendas-stack" class="layers-stack"></div>
+
+      <button id="btn-guardar-hero-outfit" class="btn-secondary" style="margin-top: var(--spacing-sm);">
+        SAVE STATEMENT LOOK TO ARCHIVE
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN BÚSQUEDA DE OUTFIT DESDE CERO -->
+<section id="search-outfit-section" class="search-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">CONTEXT STYLIST</h2>
+    <span class="subtitle-caption">SEARCH OUTFIT FROM SCRATCH</span>
+  </div>
+
+  <div class="search-container">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="search-estilo">ESTILO DESEADO</label>
+        <select id="search-estilo" class="builder-select">
+          <option value="todos">Cualquier estilo</option>
+          <option value="streetwear">Streetwear</option>
+          <option value="old_money">Old Money</option>
+          <option value="preppy">Preppy</option>
+          <option value="casual">Casual</option>
+          <option value="minimalista">Minimal</option>
+          <option value="workwear">Workwear</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="search-ocasion">OCASIÓN</label>
+        <select id="search-ocasion" class="builder-select">
+          <option value="Casual">Día normal / Facultad</option>
+          <option value="Merienda">Merienda / Salida</option>
+          <option value="Trabajo">Trabajo / Estudio</option>
+          <option value="Noche">Bar / Fiesta / Noche</option>
+          <option value="Formal">Restaurante fino / Evento</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="search-clima">CONDICIÓN CLIMÁTICA</label>
+        <select id="search-clima" class="builder-select">
+          <option value="frio">Frío (<= 12°C)</option>
+          <option value="templado" selected>Templado (13°C - 22°C)</option>
+          <option value="caluroso">Caluroso (>= 23°C)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="search-paleta">PALETA DE COLORES (OPCIONAL)</label>
+        <select id="search-paleta" class="builder-select">
+          <option value="todas">Cualquier paleta</option>
+          <option value="tierra">Tonos Tierra (Beige, Marrón, Oliva)</option>
+          <option value="neutra">Neutros puros (Negro, Blanco, Gris)</option>
+          <option value="fria">Tonos Fríos (Azul, Marino, Celeste)</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="btn-buscar-outfit" class="btn-primary" style="margin-top: var(--spacing-sm);">
+      SEARCH MATCHING LOOKS
+    </button>
+
+    <div id="search-results-grid" class="grid-container-outfits" style="display: none; margin-top: var(--spacing-lg);">
+      <!-- Los resultados de búsqueda se inyectarán dinámicamente aquí -->
+    </div>
+  </div>
+</section>
+
     <!-- SECCIÓN AGREGAR PRENDA EXTENDIDA -->
     <section id="add" class="form-section">
       <div class="section-header">
