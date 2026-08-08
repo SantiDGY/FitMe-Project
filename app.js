@@ -1,28 +1,57 @@
 // ==========================================
-// 1. MODELOS DE DATOS
+// 1. DICCIONARIO DE CATEGORÍAS Y TIPOS
+// ==========================================
+
+const TIPOS_POR_CATEGORIA = {
+  "Capa interna": ["Remera manga corta", "Remera manga larga", "Musculosa", "Top", "Camisa"],
+  "Capa media": ["Sweater", "Cardigan", "Hoodie", "Buzo", "Chaleco"],
+  "Capa externa": ["Campera", "Harrington", "Puffer", "Trench", "Abrigo", "Sobrecamisa"],
+  "Parte inferior": ["Jean", "Cargo", "Baggy", "Barrel", "Straight", "Short", "Chino"],
+  "Calzado": ["Sneaker", "Bota", "Loafer", "Zapato", "Sandalia"],
+  "Accesorios": ["Cadena", "Cinturón", "Gorra", "Gorro", "Bufanda", "Reloj", "Anillo"]
+};
+
+// ==========================================
+// 2. MODELOS DE DATOS
 // ==========================================
 
 class Prenda {
-  constructor(id, nombre, categoria, colorHex, formalidad, nivelAbrigo) {
-    this.id = id;
-    this.nombre = nombre;
-    this.categoria = categoria;
-    this.colorHex = colorHex;
-    this.formalidad = parseInt(formalidad);
-    this.nivelAbrigo = parseInt(nivelAbrigo);
-    this.estado = 'disponible';
+  constructor(datos = {}) {
+    this.id = datos.id || Date.now();
+    this.nombre = datos.nombre || "Sin nombre";
+    this.categoria = datos.categoria || "Capa interna";
+    this.tipoEspecifico = datos.tipoEspecifico || datos.tipo_especifico || "Prenda";
+    this.marca = datos.marca || "Sin marca";
+    this.material = datos.material || "Algodón";
+    this.colorHex = datos.colorHex || "#000000";
+    this.foto = datos.foto || "";
+    this.temporada = datos.temporada || "Todas";
     
+    // Escalas numéricas (1-10)
+    this.formalidad = parseInt(datos.formalidad) || 5;
+    this.cargaVisual = parseInt(datos.cargaVisual) || 3;
+    this.nivelAbrigo = parseInt(datos.nivelAbrigo) || 5;
+    
+    // Estado y Metadatos
+    this.estado = datos.estado || "disponible";
+    this.favorita = Boolean(datos.favorita);
+    this.fechaIncorporacion = datos.fechaIncorporacion || new Date().toISOString().split('T')[0];
+
     // Extracción automática de HSL
-    const hsl = Prenda.hexToHSL(colorHex);
+    const hsl = Prenda.hexToHSL(this.colorHex);
     this.hue = hsl.h;
     this.saturation = hsl.s;
     this.lightness = hsl.l;
   }
 
   static hexToHSL(hex) {
-    let r = parseInt(hex.slice(1, 3), 16) / 255;
-    let g = parseInt(hex.slice(3, 5), 16) / 255;
-    let b = parseInt(hex.slice(5, 7), 16) / 255;
+    if (!hex || typeof hex !== 'string') return { h: 0, s: 0, l: 0 };
+    let cleanHex = hex.lstrip ? hex.lstrip('#') : hex.replace('#', '');
+    if (cleanHex.length !== 6) cleanHex = "000000";
+
+    let r = parseInt(cleanHex.slice(0, 2), 16) / 255;
+    let g = parseInt(cleanHex.slice(2, 4), 16) / 255;
+    let b = parseInt(cleanHex.slice(4, 6), 16) / 255;
 
     let max = Math.max(r, g, b), min = Math.min(r, g, b);
     let h, s, l = (max + min) / 2;
@@ -51,18 +80,18 @@ class Outfit {
   }
 
   get formalidadPromedio() {
-    if (this.prendas.length === 0) return 0;
-    const suma = this.prendas.reduce((acc, p) => acc + p.formalidad, 0);
+    if (!this.prendas || this.prendas.length === 0) return 0;
+    const suma = this.prendas.reduce((acc, p) => acc + (p.formalidad || 5), 0);
     return (suma / this.prendas.length).toFixed(1);
   }
 }
 
 // ==========================================
-// 2. GESTOR DE ESTADO (LOCALSTORAGE)
+// 3. GESTOR DEL ARMARIO (LOCALSTORAGE)
 // ==========================================
 
 const Armario = {
-  prendas: JSON.parse(localStorage.getItem('fitme_prendas')) || [],
+  prendas: (JSON.parse(localStorage.getItem('fitme_prendas')) || []).map(p => new Prenda(p)),
 
   guardar(prenda) {
     this.prendas.push(prenda);
@@ -76,17 +105,28 @@ const Armario = {
     
     container.innerHTML = '';
 
+    if (this.prendas.length === 0) {
+      container.innerHTML = `<p class="empty-msg">No pieces in archive yet.</p>`;
+      return;
+    }
+
     this.prendas.forEach(p => {
       const card = document.createElement('div');
       card.className = 'card-prenda';
+
+      // Validación segura contra undefined antes de aplicar .toUpperCase()
+      const tipoTexto = (p.tipoEspecifico || p.categoria || "PRENDA").toUpperCase();
+      const marcaTexto = (p.marca || "SIN MARCA").toUpperCase();
+
       card.innerHTML = `
-        <div>
-          <div class="card-title">${p.nombre}</div>
-          <div class="card-meta">${p.categoria.toUpperCase()}</div>
+        <div class="card-header">
+          <div class="card-title">${p.nombre || 'Sin nombre'} ${p.favorita ? '★' : ''}</div>
+          <div class="card-meta">${tipoTexto} · ${marcaTexto}</div>
         </div>
-        <div>
-          <div class="card-meta">WARMTH: ${p.nivelAbrigo}/10</div>
-          <div class="card-color-indicator" style="background-color: ${p.colorHex};"></div>
+        ${p.foto ? `<img src="${p.foto}" alt="${p.nombre}" class="card-img">` : ''}
+        <div class="card-details">
+          <div class="card-meta">FORMALITY: ${p.formalidad}/10 | WARMTH: ${p.nivelAbrigo}/10</div>
+          <div class="card-color-indicator" style="background-color: ${p.colorHex || '#000'};"></div>
         </div>
       `;
       container.appendChild(card);
@@ -95,13 +135,13 @@ const Armario = {
 };
 
 // ==========================================
-// 3. MOTOR DE RECOMENDACIÓN E INTELIGENCIA
+// 4. MOTOR DE RECOMENDACIÓN E INTELIGENCIA
 // ==========================================
 
 const OutfitGenerator = {
   generarAleatorio(prendasDisponibles) {
     const internas = prendasDisponibles.filter(p => p.categoria === 'Capa interna');
-    const pantalones = prendasDisponibles.filter(p => p.categoria === 'Pantalón');
+    const pantalones = prendasDisponibles.filter(p => p.categoria === 'Parte inferior' || p.categoria === 'Pantalón');
     const calzados = prendasDisponibles.filter(p => p.categoria === 'Calzado');
     const externas = prendasDisponibles.filter(p => p.categoria === 'Capa externa');
 
@@ -139,7 +179,7 @@ const EvaluadorStylist = {
   },
 
   evaluarClima(prendas, tempObjetivo) {
-    const abrigoTotal = prendas.reduce((acc, p) => acc + p.nivelAbrigo, 0);
+    const abrigoTotal = prendas.reduce((acc, p) => acc + (p.nivelAbrigo || 5), 0);
     const abrigoIdeal = Math.max(2, Math.round((35 - tempObjetivo) / 2.5));
     const diferencia = Math.abs(abrigoTotal - abrigoIdeal);
     return Math.max(0, 100 - (diferencia * 12));
@@ -173,17 +213,39 @@ const OutfitGeneratorInteligente = {
 };
 
 // ==========================================
-// 4. INTERACCIÓN Y UI
+// 5. EVENTOS E INTERACCIÓN
 // ==========================================
 
-document.getElementById('formalidad')?.addEventListener('input', (e) => {
+document.getElementById('categoria')?.addEventListener('change', (e) => {
+  const catSeleccionada = e.target.value;
+  const selectTipo = document.getElementById('tipo_especifico');
+  
+  if (!selectTipo) return;
+
+  selectTipo.innerHTML = '<option value="" disabled selected>Select type...</option>';
+  
+  if (TIPOS_POR_CATEGORIA[catSeleccionada]) {
+    TIPOS_POR_CATEGORIA[catSeleccionada].forEach(tipo => {
+      const option = document.createElement('option');
+      option.value = tipo;
+      option.textContent = tipo;
+      selectTipo.appendChild(option);
+    });
+    selectTipo.disabled = false;
+  } else {
+    selectTipo.disabled = true;
+  }
+});
+
+document.getElementById('formalidad')?.addEventListener('input', e => {
   document.getElementById('val-formalidad').textContent = e.target.value;
 });
-
-document.getElementById('abrigo')?.addEventListener('input', (e) => {
+document.getElementById('carga_visual')?.addEventListener('input', e => {
+  document.getElementById('val-carga').textContent = e.target.value;
+});
+document.getElementById('abrigo')?.addEventListener('input', e => {
   document.getElementById('val-abrigo').textContent = e.target.value;
 });
-
 document.getElementById('temperatura-input')?.addEventListener('input', (e) => {
   const temp = e.target.value;
   document.getElementById('val-temp').textContent = `${temp}°C`;
@@ -194,17 +256,29 @@ document.getElementById('temperatura-input')?.addEventListener('input', (e) => {
 document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
   
-  const nuevaPrenda = new Prenda(
-    Date.now(),
-    document.getElementById('nombre').value,
-    document.getElementById('categoria').value,
-    document.getElementById('color').value,
-    document.getElementById('formalidad').value,
-    document.getElementById('abrigo').value
-  );
+  const selectTipo = document.getElementById('tipo_especifico');
 
+  const datosPrenda = {
+    nombre: document.getElementById('nombre').value,
+    categoria: document.getElementById('categoria').value,
+    tipoEspecifico: selectTipo ? selectTipo.value : '',
+    marca: document.getElementById('marca').value,
+    material: document.getElementById('material').value,
+    temporada: document.getElementById('temporada').value,
+    colorHex: document.getElementById('color').value,
+    foto: document.getElementById('foto').value,
+    formalidad: document.getElementById('formalidad').value,
+    cargaVisual: document.getElementById('carga_visual').value,
+    nivelAbrigo: document.getElementById('abrigo').value,
+    estado: document.getElementById('estado').value,
+    favorita: document.getElementById('favorita').checked
+  };
+
+  const nuevaPrenda = new Prenda(datosPrenda);
   Armario.guardar(nuevaPrenda);
+  
   e.target.reset();
+  if (selectTipo) selectTipo.disabled = true;
 });
 
 document.getElementById('btn-generar')?.addEventListener('click', () => {
@@ -215,7 +289,7 @@ document.getElementById('btn-generar')?.addEventListener('click', () => {
   if (mejorOutfit) {
     mostrarOutfit(mejorOutfit);
   } else {
-    alert('Necesitas guardar al menos 1 Capa interna, 1 Pantalón y 1 Calzado en tu colección para generar combinaciones.');
+    alert('Necesitas guardar al menos 1 Capa interna, 1 Parte inferior y 1 Calzado en tu colección para generar combinaciones.');
   }
 });
 
@@ -247,5 +321,5 @@ function mostrarOutfit(outfit) {
   containerResult.style.display = 'block';
 }
 
-// Inicialización
+// Carga e inicialización segura
 Armario.render();

@@ -80,51 +80,116 @@
 
     <hr class="divider">
 
-    <!-- SECCIÓN AGREGAR PRENDA -->
-    <section id="add" class="form-section">
-      <div class="section-header">
-        <h2 class="editorial-subtitle">NEW PIECE</h2>
-        <span class="subtitle-caption">ADD TO CATALOG</span>
+    <!-- SECCIÓN AGREGAR PRENDA EXTENDIDA -->
+<section id="add" class="form-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">NEW PIECE</h2>
+    <span class="subtitle-caption">FULL ARCHIVE ENTRY</span>
+  </div>
+
+  <form id="prenda-form" class="editorial-form">
+    <div class="form-row">
+      <div class="form-group">
+        <label for="nombre">ITEM NAME *</label>
+        <input type="text" id="nombre" placeholder="e.g. Harrington Sand" required>
       </div>
+      <div class="form-group">
+        <label for="marca">BRAND</label>
+        <input type="text" id="marca" placeholder="e.g. Zara, Nike, Vintage">
+      </div>
+    </div>
 
-      <form id="prenda-form" class="editorial-form">
-        <div class="form-group">
-          <label for="nombre">ITEM NAME</label>
-          <input type="text" id="nombre" placeholder="e.g. Harrington Sand" required>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="categoria">CATEGORY *</label>
+        <select id="categoria" required>
+          <option value="" disabled selected>Select category...</option>
+          <option value="Capa interna">Capa interna</option>
+          <option value="Capa media">Capa media</option>
+          <option value="Capa externa">Capa externa</option>
+          <option value="Parte inferior">Parte inferior</option>
+          <option value="Calzado">Calzado</option>
+          <option value="Accesorios">Accesorios</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="tipo_especifico">SPECIFIC TYPE *</label>
+        <select id="tipo_especifico" required disabled>
+          <option value="" disabled selected>Select category first...</option>
+        </select>
+      </div>
+    </div>
 
-        <div class="form-group">
-          <label for="categoria">CATEGORY</label>
-          <select id="categoria" required>
-            <option value="" disabled selected>Select category...</option>
-            <option value="Capa externa">Capa externa</option>
-            <option value="Capa media">Capa media</option>
-            <option value="Capa interna">Capa interna</option>
-            <option value="Pantalón">Pantalón</option>
-            <option value="Calzado">Calzado</option>
-          </select>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="material">MATERIAL / FABRIC</label>
+        <select id="material">
+          <option value="Algodón">Algodón</option>
+          <option value="Denim">Denim</option>
+          <option value="Sarga">Sarga</option>
+          <option value="Lana">Lana</option>
+          <option value="Lino">Lino</option>
+          <option value="Nylon">Nylon</option>
+          <option value="Cuero">Cuero</option>
+          <option value="Sintético">Sintético</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="temporada">SEASON</label>
+        <select id="temporada">
+          <option value="Todas">Todas las temporadas</option>
+          <option value="Verano">Verano</option>
+          <option value="Invierno">Invierno</option>
+          <option value="Entretiempo">Entretiempo</option>
+        </select>
+      </div>
+    </div>
 
-        <div class="form-group">
-          <label for="color">BASE COLOR</label>
-          <input type="color" id="color" value="#1b365d" class="color-picker-input">
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="color">MAIN COLOR (HEX) *</label>
+        <input type="color" id="color" value="#1b365d" class="color-picker-input">
+      </div>
+      <div class="form-group">
+        <label for="foto">PHOTO URL (OPTIONAL)</label>
+        <input type="url" id="foto" placeholder="https://example.com/image.jpg">
+      </div>
+    </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="formalidad">FORMALITY: <span id="val-formalidad">5</span>/10</label>
-            <input type="range" id="formalidad" min="1" max="10" value="5">
-          </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="formalidad">FORMALITY: <span id="val-formalidad">5</span>/10</label>
+        <input type="range" id="formalidad" min="1" max="10" value="5">
+      </div>
+      <div class="form-group">
+        <label for="carga_visual">VISUAL WEIGHT: <span id="val-carga">3</span>/10</label>
+        <input type="range" id="carga_visual" min="1" max="10" value="3">
+      </div>
+      <div class="form-group">
+        <label for="abrigo">WARMTH: <span id="val-abrigo">5</span>/10</label>
+        <input type="range" id="abrigo" min="1" max="10" value="5">
+      </div>
+    </div>
 
-          <div class="form-group">
-            <label for="abrigo">WARMTH: <span id="val-abrigo">5</span>/10</label>
-            <input type="range" id="abrigo" min="1" max="10" value="5">
-          </div>
-        </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="estado">STATUS</label>
+        <select id="estado">
+          <option value="disponible">Disponible</option>
+          <option value="lavar">En lavado</option>
+          <option value="guardar">Guardado / Fuera de temporada</option>
+        </select>
+      </div>
+      <div class="form-group checkbox-group">
+        <label for="favorita">
+          <input type="checkbox" id="favorita"> FAVORITE PIECE
+        </label>
+      </div>
+    </div>
 
-        <button type="submit" class="btn-secondary">SAVE TO WARDROBE</button>
-      </form>
-    </section>
+    <button type="submit" class="btn-secondary">SAVE TO ARCHIVE</button>
+  </form>
+</section>
 
   </main>
 
