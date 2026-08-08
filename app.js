@@ -1577,6 +1577,314 @@ HistorialUsoManager.registrar = function() {
   this.render();
 };
 
+// ==========================================
+// 15. MÓDULO ESTADÍSTICAS DEL ARMARIO
+// ==========================================
+
+const ArmarioStatsManager = {
+  calcularUsoPrendas() {
+    const historial = HistorialUsoManager.obtenerRegistros();
+    const conteoUsos = {};
+
+    historial.forEach(reg => {
+      reg.prendas.forEach(p => {
+        conteoUsos[p.id] = (conteoUsos[p.id] || 0) + 1;
+      });
+    });
+
+    return conteoUsos;
+  },
+
+  render() {
+    const totalPrendas = Armario.prendas.length;
+    const outfitsGuardados = Lookbook.obtenerGuardados().length;
+    const historialUso = HistorialUsoManager.obtenerRegistros();
+
+    const elTotalP = document.getElementById('stat-total-prendas');
+    const elTotalO = document.getElementById('stat-total-outfits');
+    const elTotalU = document.getElementById('stat-total-usos');
+
+    if (elTotalP) elTotalP.textContent = totalPrendas;
+    if (elTotalO) elTotalO.textContent = outfitsGuardados;
+    if (elTotalU) elTotalU.textContent = historialUso.length;
+
+    // 1. Distribución por Categoría
+    const catContainer = document.getElementById('stats-categoria-list');
+    if (catContainer) {
+      catContainer.innerHTML = '';
+      const conteoCat = {};
+
+      Armario.prendas.forEach(p => {
+        conteoCat[p.categoria] = (conteoCat[p.categoria] || 0) + 1;
+      });
+
+      for (const [cat, cant] of Object.entries(conteoCat)) {
+        const pct = totalPrendas > 0 ? Math.round((cant / totalPrendas) * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'stat-bar-row';
+        row.innerHTML = `
+          <div class="stat-bar-label"><span>${cat.toUpperCase()}</span><span>${cant} (${pct}%)</span></div>
+          <div class="stat-bar-track"><div class="stat-bar-fill" style="width: ${pct}%;"></div></div>
+        `;
+        catContainer.appendChild(row);
+      }
+    }
+
+    // 2. Prendas Más Usadas y Olvidadas
+    const conteoUsos = this.calcularUsoPrendas();
+    const prendasOrdenadas = [...Armario.prendas].map(p => ({
+      prenda: p,
+      usos: conteoUsos[p.id] || 0
+    })).sort((a, b) => b.usos - a.usos);
+
+    const masUsadasContainer = document.getElementById('stats-mas-usadas-list');
+    if (masUsadasContainer) {
+      masUsadasContainer.innerHTML = '';
+      const top3 = prendasOrdenadas.slice(0, 3);
+
+      top3.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'layer-item-mini';
+        row.innerHTML = `
+          <div class="color-dot" style="background-color: ${item.prenda.colorHex || '#000'}"></div>
+          <span class="layer-name">${item.prenda.nombre}</span>
+          <span class="layer-cat-mini">${item.usos} USOS</span>
+        `;
+        masUsadasContainer.appendChild(row);
+      });
+    }
+
+    const olvidadasContainer = document.getElementById('stats-olvidadas-list');
+    if (olvidadasContainer) {
+      olvidadasContainer.innerHTML = '';
+      const olvidadas = prendasOrdenadas.filter(item => item.usos === 0);
+
+      if (olvidadas.length === 0) {
+        olvidadasContainer.innerHTML = `<p class="empty-msg">Todas tus prendas tienen al menos 1 uso registrado.</p>`;
+      } else {
+        olvidadas.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card-prenda';
+          card.innerHTML = `
+            <div class="card-title">${item.prenda.nombre}</div>
+            <div class="card-meta">${item.prenda.categoria.toUpperCase()} · SIN USOS</div>
+            <div class="card-color-indicator" style="background-color: ${item.prenda.colorHex || '#000'}; margin-top: 8px;"></div>
+          `;
+          olvidadasContainer.appendChild(card);
+        });
+      }
+    }
+  }
+};
+
+// ==========================================
+// 16. MÓDULO LISTA DE DESEOS Y ANALIZADOR DE COMPRAS
+// ==========================================
+
+const WishlistManager = {
+  evaluacionActual: null,
+
+  obtenerDeseos() {
+    const raw = localStorage.getItem('fitme_wishlist');
+    return raw ? JSON.parse(raw) : [];
+  },
+
+  analizarPrendaDeseada() {
+    const nombre = document.getElementById('wish-nombre')?.value || "Prenda Deseada";
+    const categoria = document.getElementById('wish-categoria')?.value || "Capa interna";
+    const colorHex = document.getElementById('wish-color')?.value || "#111111";
+    const formalidad = parseInt(document.getElementById('wish-formalidad')?.value || 5);
+
+    const prendaSimulada = new Prenda({
+      id: Date.now(),
+      nombre,
+      categoria,
+      colorHex,
+      formalidad
+    });
+
+    // 1. Simular combinación con prendas existentes
+    let outfitsPosibles = 0;
+    let sumaCompatibilidad = 0;
+    const INTENTOS = 30;
+
+    for (let i = 0; i < INTENTOS; i++) {
+      const baseOutfit = OutfitGenerator.generarAleatorio(Armario.prendas);
+      if (baseOutfit) {
+        // Reemplazar o agregar la prenda simulada en su categoría
+        const prendasMezcladas = baseOutfit.prendas.filter(p => p.categoria !== categoria);
+        prendasMezcladas.push(prendaSimulada);
+
+        const outfitTest = new Outfit(Date.now(), prendasMezcladas);
+        const evalTest = FitMeEngine.evaluarOutfitCompleto(outfitTest, { temperatura: 18 });
+
+        if (evalTest.estado !== "INCOMPATIBLE") {
+          outfitsPosibles++;
+          sumaCompatibilidad += evalTest.compatibilityScore;
+        }
+      }
+    }
+
+    const promedioCompat = outfitsPosibles > 0 ? Math.round(sumaCompatibilidad / outfitsPosibles) : 0;
+
+    // 2. Contar prendas similares ya existentes en el armario
+    const similares = Armario.prendas.filter(p => 
+      p.categoria === categoria && Math.abs(p.formalidad - formalidad) <= 2
+    ).length;
+
+    this.evaluacionActual = {
+      prenda: prendaSimulada,
+      compatibilidad: promedioCompat,
+      outfitsPosibles,
+      similares
+    };
+
+    // Renderizar reporte
+    const container = document.getElementById('wish-analysis-result');
+    const reportText = document.getElementById('wish-report-text');
+    const elCompat = document.getElementById('wish-compat-val');
+    const elOutfits = document.getElementById('wish-outfits-val');
+    const elSimilares = document.getElementById('wish-similares-val');
+
+    if (container && reportText && elCompat && elOutfits && elSimilares) {
+      elCompat.textContent = `${promedioCompat}%`;
+      elOutfits.textContent = outfitsPosibles;
+      elSimilares.textContent = similares;
+
+      let mensaje = `La prenda ${nombre.toUpperCase()} se integra bien con tu colección actual.`;
+      if (similares > 2) {
+        mensaje += ` Atención: Ya posees ${similares} prendas con características similares en tu armario.`;
+      }
+
+      reportText.textContent = mensaje;
+      container.style.display = 'block';
+    }
+  },
+
+  guardar() {
+    if (!this.evaluacionActual) return;
+    const lista = this.obtenerDeseos();
+    lista.push(this.evaluacionActual);
+    localStorage.setItem('fitme_wishlist', JSON.stringify(lista));
+    alert('Prenda guardada en tu Lista de Deseos.');
+    this.render();
+  },
+
+  render() {
+    const container = document.getElementById('wishlist-grid');
+    if (!container) return;
+
+    const deseos = this.obtenerDeseos();
+    container.innerHTML = '';
+
+    if (deseos.length === 0) {
+      container.innerHTML = `<p class="empty-msg">No tienes prendas en tu lista de deseos.</p>`;
+      return;
+    }
+
+    deseos.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card-prenda';
+      card.innerHTML = `
+        <div class="card-title">${item.prenda.nombre}</div>
+        <div class="card-meta">${item.prenda.categoria.toUpperCase()} · ${item.compatibilidad}% COMPATIBLE</div>
+        <div class="card-color-indicator" style="background-color: ${item.prenda.colorHex || '#000'}; margin-top: 8px;"></div>
+      `;
+      container.appendChild(card);
+    });
+  }
+};
+
+// ==========================================
+// 17. MÓDULO ARMARIO INTELIGENTE (DETECCIÓN DE HUECOS)
+// ==========================================
+
+const SmartWardrobeAnalyzer = {
+  diagnosticar() {
+    const container = document.getElementById('smart-diagnosis-results');
+    const alertsList = document.getElementById('smart-alerts-list');
+    if (!container || !alertsList) return;
+
+    alertsList.innerHTML = '';
+    const alertas = [];
+
+    const conteo = {
+      interna: Armario.prendas.filter(p => p.categoria === 'Capa interna').length,
+      inferior: Armario.prendas.filter(p => p.categoria === 'Parte inferior' || p.categoria === 'Pantalón').length,
+      calzado: Armario.prendas.filter(p => p.categoria === 'Calzado').length,
+      externa: Armario.prendas.filter(p => p.categoria === 'Capa externa').length
+    };
+
+    // Regla 1: Desbalance de prendas superiores e inferiores
+    if (conteo.interna > conteo.inferior * 3) {
+      alertas.push({
+        tipo: 'WARNING',
+        titulo: 'Desproporción de Capas',
+        mensaje: `Tienes ${conteo.interna} capas internas frente a solo ${conteo.inferior} prendas inferiores. Incorporar pantalones variados aumentará drásticamente tus combinaciones.`
+      });
+    }
+
+    // Regla 2: Escasez de Calzado
+    if (conteo.calzado < 2) {
+      alertas.push({
+        tipo: 'INFO',
+        titulo: 'Variedad de Calzado Limitada',
+        mensaje: 'Posees menos de 2 pares de calzado. El calzado define el nivel de formalidad de todo el outfit.'
+      });
+    }
+
+    // Regla 3: Dominancia Cromática Monótona
+    const neutros = Armario.prendas.filter(p => p.saturation < 20 || p.lightness > 85 || p.lightness < 15).length;
+    if (Armario.prendas.length > 5 && (neutros / Armario.prendas.length) > 0.8) {
+      alertas.push({
+        tipo: 'INFO',
+        titulo: 'Oportunidad de Color de Acento',
+        mensaje: 'Más del 80% de tus prendas son tonos neutros. Una prenda de acento cromático (azul, verde o terracota) revitalizará tus combinaciones.'
+      });
+    }
+
+    if (alertas.length === 0) {
+      alertas.push({
+        tipo: 'OK',
+        titulo: 'Armario Balanceado',
+        mensaje: 'Tu colección presenta una excelente proporción entre categorías y versatilidad cromática.'
+      });
+    }
+
+    alertas.forEach(a => {
+      const item = document.createElement('div');
+      item.className = 'layer-item';
+      item.style.borderLeftColor = a.tipo === 'WARNING' ? '#d97706' : '#1b365d';
+      item.innerHTML = `
+        <div>
+          <div class="layer-category">${a.titulo.toUpperCase()}</div>
+          <div class="layer-name" style="font-size: 0.85rem; font-weight: 400; margin-top: 4px;">${a.mensaje}</div>
+        </div>
+      `;
+      alertsList.appendChild(item);
+    });
+
+    container.style.display = 'block';
+  }
+};
+
+// Eventos de vinculación
+document.getElementById('btn-analizar-deseo')?.addEventListener('click', () => {
+  WishlistManager.analizarPrendaDeseada();
+});
+
+document.getElementById('btn-guardar-wishlist')?.addEventListener('click', () => {
+  WishlistManager.guardar();
+});
+
+document.getElementById('btn-diagnosticar-armario')?.addEventListener('click', () => {
+  SmartWardrobeAnalyzer.diagnosticar();
+});
+
+// Inicialización de módulos
+ArmarioStatsManager.render();
+WishlistManager.render();
+
 // Carga inicial
 Armario.render();
 Lookbook.render();

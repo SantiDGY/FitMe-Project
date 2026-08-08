@@ -748,3 +748,53 @@ button:disabled {
   color: var(--card-bg);
   border-color: var(--text-primary);
 }
+
+/* ANALYTICS & WISHLIST STYLES */
+.analytics-container,
+.wishlist-container,
+.smart-container {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  margin-top: var(--spacing-md);
+}
+
+.analytics-box {
+  background: var(--bg-main);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  flex: 1;
+}
+
+.stats-bars-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.stat-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.stat-bar-track {
+  height: 6px;
+  background: var(--border-color);
+  width: 100%;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: var(--text-primary);
+  transition: width 0.3s ease;
+}

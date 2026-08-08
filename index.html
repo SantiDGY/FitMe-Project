@@ -501,6 +501,132 @@
       </form>
     </section>
 
+    <!-- SECCIÓN ESTADÍSTICAS DEL ARMARIO -->
+<section id="analytics-section" class="analytics-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">WARDROBE ANALYTICS</h2>
+    <span class="subtitle-caption">DATA-DRIVEN INSIGHTS OF YOUR ARCHIVE</span>
+  </div>
+
+  <div class="analytics-container">
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">TOTAL PRENDAS</span>
+        <span class="metric-value" id="stat-total-prendas">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">OUTFITS EN LOOKBOOK</span>
+        <span class="metric-value" id="stat-total-outfits">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">USOS REGISTRADOS</span>
+        <span class="metric-value" id="stat-total-usos">0</span>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-top: var(--spacing-md);">
+      <div class="analytics-box">
+        <h3 class="editorial-subtitle" style="font-size: 1rem; margin-bottom: var(--spacing-xs);">DISTRIBUCIÓN POR CATEGORÍA</h3>
+        <div id="stats-categoria-list" class="stats-bars-container"></div>
+      </div>
+
+      <div class="analytics-box">
+        <h3 class="editorial-subtitle" style="font-size: 1rem; margin-bottom: var(--spacing-xs);">PRENDAS MÁS USADAS</h3>
+        <div id="stats-mas-usadas-list" class="layers-stack-saved"></div>
+      </div>
+    </div>
+
+    <div class="analytics-box" style="margin-top: var(--spacing-md);">
+      <h3 class="editorial-subtitle" style="font-size: 1rem; margin-bottom: var(--spacing-xs);">PRENDAS EN DESUSO O OLVIDADAS</h3>
+      <div id="stats-olvidadas-list" class="grid-container" style="margin-top: var(--spacing-xs);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN LISTA DE DESEOS Y ANALIZADOR DE COMPRAS -->
+<section id="wishlist-section" class="wishlist-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">WISHLIST & PURCHASE ANALYZER</h2>
+    <span class="subtitle-caption">EVALUATE NEW PIECES BEFORE BUYING</span>
+  </div>
+
+  <div class="wishlist-container">
+    <div class="editorial-form">
+      <h3 class="editorial-subtitle" style="font-size: 1.1rem;">EVALUAR NUEVA PRENDA</h3>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="wish-nombre">NOMBRE DE LA PRENDA *</label>
+          <input type="text" id="wish-nombre" placeholder="ej. Campera Cuero Negra" class="builder-select">
+        </div>
+        <div class="form-group">
+          <label for="wish-categoria">CATEGORÍA *</label>
+          <select id="wish-categoria" class="builder-select">
+            <option value="Capa interna">Capa interna</option>
+            <option value="Capa media">Capa media</option>
+            <option value="Capa externa">Capa externa</option>
+            <option value="Parte inferior">Parte inferior</option>
+            <option value="Calzado">Calzado</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="wish-color">COLOR ESTIMADO</label>
+          <input type="color" id="wish-color" value="#111111" class="color-picker-input">
+        </div>
+        <div class="form-group">
+          <label for="wish-formalidad">FORMALIDAD ESTIMADA (1-10)</label>
+          <input type="range" id="wish-formalidad" min="1" max="10" value="5">
+        </div>
+      </div>
+
+      <button id="btn-analizar-deseo" class="btn-primary">ANALIZAR IMPACTO EN MI ARMARIO</button>
+    </div>
+
+    <div id="wish-analysis-result" class="curated-card" style="display: none; margin-top: var(--spacing-md);">
+      <h3 class="editorial-subtitle" style="font-size: 1.2rem;">INFORME DE COMPRA INTELIGENTE</h3>
+      <p id="wish-report-text" class="outfit-explanation-text" style="margin-top: var(--spacing-xs);"></p>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">COMPATIBILIDAD</span>
+          <span class="metric-value" id="wish-compat-val">0%</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">NUEVOS OUTFITS</span>
+          <span class="metric-value" id="wish-outfits-val">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">PRENDAS SIMILARES</span>
+          <span class="metric-value" id="wish-similares-val">0</span>
+        </div>
+      </div>
+      <button id="btn-guardar-wishlist" class="btn-secondary" style="margin-top: var(--spacing-sm);">
+        GUARDAR EN LISTA DE DESEOS
+      </button>
+    </div>
+
+    <div id="wishlist-grid" class="grid-container" style="margin-top: var(--spacing-lg);"></div>
+  </div>
+</section>
+
+<!-- SECCIÓN ARMARIO INTELIGENTE -->
+<section id="smart-wardrobe-section" class="smart-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">SMART WARDROBE DIAGNOSIS</h2>
+    <span class="subtitle-caption">GAP DETECTION & ARCHIVE OPTIMIZATION</span>
+  </div>
+
+  <div class="smart-container">
+    <button id="btn-diagnosticar-armario" class="btn-primary">EJECUTAR DIAGNÓSTICO DE ARMARIO</button>
+
+    <div id="smart-diagnosis-results" style="display: none; margin-top: var(--spacing-md);">
+      <div class="layers-stack" id="smart-alerts-list"></div>
+    </div>
+  </div>
+</section>
+
   </main>
 
   <footer class="site-footer">
