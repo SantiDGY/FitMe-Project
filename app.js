@@ -1206,6 +1206,138 @@ document.getElementById('btn-buscar-outfit')?.addEventListener('click', () => {
   SearchOutfitStylist.buscar();
 });
 
+// ==========================================
+// 12. MÓDULO SISTEMA DE COLORES (COLOR HARMONY EXPLORER)
+// ==========================================
+
+const ColorHarmonyExplorer = {
+  
+  // Valida si una prenda individual pertenece al filtro de color
+  evaluarPrendaEnArmonia(prenda, armonia) {
+    const { hue, saturation, lightness } = prenda;
+
+    switch (armonia) {
+      case 'neutros':
+        return saturation < 20 || lightness > 85 || lightness < 15;
+      case 'tierra':
+        return (hue >= 10 && hue <= 85) && (lightness >= 20 && lightness <= 75);
+      case 'calidos':
+        return (hue >= 0 && hue <= 60) || (hue >= 320 && hue <= 360);
+      case 'frios':
+        return hue >= 120 && hue <= 280;
+      case 'alto_contraste':
+        return lightness < 25 || lightness > 80;
+      case 'bajo_contraste':
+        return lightness >= 35 && lightness <= 65;
+      default:
+        return true;
+    }
+  },
+
+  // Valida si un outfit completo respeta la regla cromática seleccionada
+  evaluarOutfitEnArmonia(outfit, armonia) {
+    const prendas = outfit.prendas;
+    const noNeutros = prendas.filter(p => p.saturation > 15 && p.lightness > 15 && p.lightness < 85);
+    const hues = noNeutros.map(p => p.hue);
+
+    if (hues.length < 2) {
+      return armonia === 'neutros' || armonia === 'monocromático' || armonia === 'bajo_contraste';
+    }
+
+    const maxHue = Math.max(...hues);
+    const minHue = Math.min(...hues);
+    const difHue = maxHue - minHue;
+
+    switch (armonia) {
+      case 'monocromático':
+        return difHue <= 18;
+      case 'análogos':
+        return difHue > 18 && difHue <= 50;
+      case 'complementarios':
+        return difHue >= 140 && difHue <= 220;
+      case 'alto_contraste':
+        const luces = prendas.map(p => p.lightness);
+        return (Math.max(...luces) - Math.min(...luces)) > 50;
+      case 'bajo_contraste':
+        const lucesBaja = prendas.map(p => p.lightness);
+        return (Math.max(...lucesBaja) - Math.min(...lucesBaja)) <= 25;
+      default:
+        return prendas.every(p => this.evaluarPrendaEnArmonia(p, armonia));
+    }
+  },
+
+  // Ejecuta el análisis dinámico en el armario actual
+  analizar() {
+    const armonia = document.getElementById('select-armonia')?.value || 'neutros';
+
+    // 1. Filtrar prendas compatibles del armario
+    const prendasCompatibles = Armario.prendas.filter(p => this.evaluarPrendaEnArmonia(p, armonia));
+
+    // 2. Simular combinaciones posibles válidas
+    let combinacionesPosibles = 0;
+    const INTENTOS = 50;
+    const combosUnicos = new Set();
+
+    for (let i = 0; i < INTENTOS; i++) {
+      const candidato = OutfitGenerator.generarAleatorio(Armario.prendas);
+      if (candidato && this.evaluarOutfitEnArmonia(candidato, armonia)) {
+        const idCombo = candidato.prendas.map(p => p.id).sort().join('-');
+        combosUnicos.add(idCombo);
+      }
+    }
+    combinacionesPosibles = combosUnicos.size;
+
+    // 3. Evaluar coincidencia en outfits guardados en Lookbook
+    const outfitsGuardados = Lookbook.obtenerGuardados();
+    const guardadosCompatibles = outfitsGuardados.filter(o => this.evaluarOutfitEnArmonia(o, armonia));
+
+    // Renderizar contadores en pantalla
+    const elPrendas = document.getElementById('count-prendas-color');
+    const elCombos = document.getElementById('count-combos-color');
+    const elSaved = document.getElementById('count-saved-color');
+
+    if (elPrendas) elPrendas.textContent = prendasCompatibles.length;
+    if (elCombos) elCombos.textContent = combinacionesPosibles;
+    if (elSaved) elSaved.textContent = guardadosCompatibles.length;
+
+    // Renderizar tarjetas de las prendas que responden a la armonía
+    const container = document.getElementById('color-prendas-preview');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (prendasCompatibles.length === 0) {
+      container.innerHTML = `<p class="empty-msg">No se encontraron prendas en tu colección que respondan a esta categoría de color.</p>`;
+      return;
+    }
+
+    prendasCompatibles.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card-prenda';
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-title">${p.nombre}</div>
+          <div class="card-meta">${p.categoria.toUpperCase()}</div>
+        </div>
+        <div class="card-details">
+          <div class="card-color-indicator" style="background-color: ${p.colorHex || '#000'}; height: 8px;"></div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+};
+
+// Evento de cambio en la selección de armonía
+document.getElementById('select-armonia')?.addEventListener('change', () => {
+  ColorHarmonyExplorer.analizar();
+});
+
+// Carga e inicialización global
+Armario.render();
+Lookbook.render();
+ColorHarmonyExplorer.analizar();
+
 // Carga e inicialización global
 Armario.render();
 Lookbook.render();

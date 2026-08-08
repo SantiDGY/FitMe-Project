@@ -277,6 +277,53 @@
   </div>
 </section>
 
+<!-- NAVEGACIÓN ACTUALIZADA (Añadir enlace COLOR) -->
+<!-- <a href="#color-explorer-section" class="nav-link">COLOR</a> -->
+
+<!-- SECCIÓN EXPLORADOR DE SISTEMA DE COLORES -->
+<section id="color-explorer-section" class="color-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">COLOR HARMONY EXPLORER</h2>
+    <span class="subtitle-caption">PRACTICAL COLOR THEORY FOR YOUR ARCHIVE</span>
+  </div>
+
+  <div class="color-explorer-container">
+    <div class="form-group">
+      <label for="select-armonia">SELECCIONA UNA ARMONÍA O PALETA</label>
+      <select id="select-armonia" class="builder-select">
+        <option value="neutros">Neutros (Negro, Blanco, Gris)</option>
+        <option value="tierra">Tonos Tierra (Beige, Marrón, Oliva)</option>
+        <option value="calidos">Tonos Cálidos (Rojo, Naranja, Amarillo)</option>
+        <option value="frios">Tonos Fríos (Azul, Verde, Violeta)</option>
+        <option value="monocromático">Monocromático (Mismo tono, variante de luz)</option>
+        <option value="análogos">Análogos (Colores contiguos en el círculo)</option>
+        <option value="complementarios">Complementarios (Colores opuestos)</option>
+        <option value="alto_contraste">Alto Contraste</option>
+        <option value="bajo_contraste">Bajo Contraste / Suave</option>
+      </select>
+    </div>
+
+    <!-- PANEL DE RESUMEN DE MÉTRICAS CROMÁTICAS -->
+    <div id="color-metrics-summary" class="metrics-grid" style="margin-top: var(--spacing-md);">
+      <div class="metric-card">
+        <span class="metric-label">PRENDAS COMPATIBLES</span>
+        <span class="metric-value" id="count-prendas-color">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">COMBINACIONES POSIBLES</span>
+        <span class="metric-value" id="count-combos-color">0</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">OUTFITS EN LOOKBOOK</span>
+        <span class="metric-value" id="count-saved-color">0</span>
+      </div>
+    </div>
+
+    <!-- VISTA PREVIA DE PRENDAS COMPATIBLES -->
+    <div id="color-prendas-preview" class="grid-container" style="margin-top: var(--spacing-md);"></div>
+  </div>
+</section>
+
     <!-- SECCIÓN AGREGAR PRENDA EXTENDIDA -->
     <section id="add" class="form-section">
       <div class="section-header">

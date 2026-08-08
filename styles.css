@@ -623,3 +623,11 @@ button:disabled {
   flex-direction: column;
   gap: var(--spacing-md);
 }
+
+/* COLOR HARMONY EXPLORER */
+.color-explorer-container {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  margin-top: var(--spacing-md);
+}
