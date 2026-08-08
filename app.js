@@ -1333,6 +1333,180 @@ document.getElementById('select-armonia')?.addEventListener('change', () => {
   ColorHarmonyExplorer.analizar();
 });
 
+// ==========================================
+// 13. MÓDULO HISTORIAL DE USO (OUTFIT WEAR TRACKER)
+// ==========================================
+
+class RegistroUso {
+  constructor(datos = {}) {
+    this.id = datos.id || Date.now();
+    this.outfitId = datos.outfitId;
+    this.prendas = datos.prendas || [];
+    this.fecha = datos.fecha || new Date().toISOString().split('T')[0];
+    this.ocasion = datos.ocasion || "Día normal";
+    this.temperatura = datos.temperatura || "18°C";
+    this.valoracion = parseInt(datos.valoracion) || 8;
+  }
+}
+
+const HistorialUsoManager = {
+  
+  obtenerRegistros() {
+    const raw = localStorage.getItem('fitme_historial_uso');
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw).map(r => new RegistroUso(r));
+    } catch (e) {
+      console.error("Error al leer el historial de uso:", e);
+      return [];
+    }
+  },
+
+  poblarSelectorOutfits() {
+    const selectEl = document.getElementById('log-select-outfit');
+    if (!selectEl) return;
+
+    selectEl.innerHTML = '<option value="">-- Selecciona de tu Lookbook --</option>';
+    const outfitsGuardados = Lookbook.obtenerGuardados();
+
+    outfitsGuardados.forEach((o, index) => {
+      const nombresPrendas = o.prendas.map(p => p.nombre).join(', ');
+      const option = document.createElement('option');
+      option.value = o.id;
+      option.textContent = `LOOK #${String(index + 1).padStart(2, '0')} — ${nombresPrendas.slice(0, 40)}...`;
+      selectEl.appendChild(option);
+    });
+
+    // Establecer fecha actual por defecto
+    const inputFecha = document.getElementById('log-fecha');
+    if (inputFecha && !inputFecha.value) {
+      inputFecha.value = new Date().toISOString().split('T')[0];
+    }
+  },
+
+  registrar() {
+    const idOutfit = document.getElementById('log-select-outfit')?.value;
+    const fecha = document.getElementById('log-fecha')?.value;
+    const ocasion = document.getElementById('log-ocasion')?.value || "Día normal";
+    const valoracion = document.getElementById('log-valoracion')?.value || 9;
+
+    if (!idOutfit || !fecha) {
+      alert('Por favor selecciona un outfit de tu Lookbook y una fecha válida.');
+      return;
+    }
+
+    const outfitsGuardados = Lookbook.obtenerGuardados();
+    const outfitObj = outfitsGuardados.find(o => o.id == idOutfit);
+
+    if (!outfitObj) return;
+
+    const tempInput = document.getElementById('temperatura-input');
+    const tempActual = tempInput ? `${tempInput.value}°C` : '18°C';
+
+    const nuevoRegistro = new RegistroUso({
+      outfitId: outfitObj.id,
+      prendas: outfitObj.prendas,
+      fecha: fecha,
+      ocasion: ocasion,
+      temperatura: tempActual,
+      valoracion: valoracion
+    });
+
+    const historialActual = this.obtenerRegistros();
+    historialActual.push(nuevoRegistro);
+    localStorage.setItem('fitme_historial_uso', JSON.stringify(historialActual));
+
+    alert('¡Registro añadido a tu línea de tiempo de estilo!');
+    this.render();
+  },
+
+  render() {
+    const container = document.getElementById('timeline-container');
+    if (!container) return;
+
+    const registros = this.obtenerRegistros();
+    container.innerHTML = '';
+
+    if (registros.length === 0) {
+      container.innerHTML = `<p class="empty-msg">No hay registros de uso aún. Selecciona un outfit y regístralo para comenzar tu línea de tiempo.</p>`;
+      return;
+    }
+
+    // Ordenar registros por fecha descendente (más recientes primero)
+    registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    // Agrupar registros por Mes y Año (ej. AGOSTO 2026)
+    const grupos = {};
+    registros.forEach(reg => {
+      const fechaObj = new Date(reg.fecha + 'T00:00:00');
+      const mesAno = fechaObj.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase();
+      if (!grupos[mesAno]) grupos[mesAno] = [];
+      grupos[mesAno].push(reg);
+    });
+
+    for (const [mesAno, lista] of Object.entries(grupos)) {
+      const grupoEl = document.createElement('div');
+      grupoEl.className = 'timeline-month-group';
+
+      let itemsHTML = '';
+      lista.forEach(reg => {
+        const diaNum = reg.fecha.split('-')[2];
+        const capasHTML = reg.prendas.map(p => `
+          <div class="layer-item-mini">
+            <div class="color-dot" style="background-color: ${p.colorHex || '#000'}"></div>
+            <span class="layer-name">${p.nombre}</span>
+          </div>
+        `).join('');
+
+        itemsHTML += `
+          <div class="timeline-card">
+            <div class="timeline-date-badge">
+              <span class="timeline-day">${diaNum}</span>
+              <span class="timeline-score">${reg.valoracion}/10</span>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-meta">${reg.ocasion.toUpperCase()} · ${reg.temperatura}</div>
+              <div class="layers-stack-saved" style="margin-top: 6px; margin-bottom: 0;">
+                ${capasHTML}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      grupoEl.innerHTML = `
+        <h3 class="timeline-month-title">${mesAno}</h3>
+        <div class="timeline-items-list">${itemsHTML}</div>
+      `;
+
+      container.appendChild(grupoEl);
+    }
+  }
+};
+
+// Eventos e inicialización
+document.getElementById('log-valoracion')?.addEventListener('input', (e) => {
+  const display = document.getElementById('val-log-score');
+  if (display) display.textContent = e.target.value;
+});
+
+document.getElementById('btn-guardar-historial')?.addEventListener('click', () => {
+  HistorialUsoManager.registrar();
+});
+
+// Refrescar selector de outfits al guardar en el Lookbook
+const renderLookbookOriginal = Lookbook.render.bind(Lookbook);
+Lookbook.render = function() {
+  renderLookbookOriginal();
+  HistorialUsoManager.poblarSelectorOutfits();
+};
+
+// Carga inicial
+Armario.render();
+Lookbook.render();
+HistorialUsoManager.poblarSelectorOutfits();
+HistorialUsoManager.render();
+
 // Carga e inicialización global
 Armario.render();
 Lookbook.render();
