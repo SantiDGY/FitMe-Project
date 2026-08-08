@@ -1501,6 +1501,82 @@ Lookbook.render = function() {
   HistorialUsoManager.poblarSelectorOutfits();
 };
 
+// ==========================================
+// 14. MÓDULO DE VALORACIÓN PERSONAL Y APRENDIZAJE
+// ==========================================
+
+// Estado temporal de la valoración activa
+const FeedbackState = {
+  estrellas: 5,
+  gustosSeleccionados: new Set()
+};
+
+// Control de selección de estrellas
+document.querySelectorAll('#star-rating-container .star').forEach(star => {
+  star.addEventListener('click', (e) => {
+    const valor = Number(e.target.getAttribute('data-value'));
+    FeedbackState.estrellas = valor;
+
+    document.querySelectorAll('#star-rating-container .star').forEach(s => {
+      const sVal = Number(s.getAttribute('data-value'));
+      s.classList.toggle('active', sVal <= valor);
+    });
+  });
+});
+
+// Control de selección de etiquetas (Chips)
+document.querySelectorAll('#group-gustos .chip-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const val = e.target.getAttribute('data-val');
+    if (FeedbackState.gustosSeleccionados.has(val)) {
+      FeedbackState.gustosSeleccionados.delete(val);
+      e.target.classList.remove('selected');
+    } else {
+      FeedbackState.gustosSeleccionados.add(val);
+      e.target.classList.add('selected');
+    }
+  });
+});
+
+// Actualización de la función de registro en HistorialUsoManager
+const registrarOriginal = HistorialUsoManager.registrar.bind(HistorialUsoManager);
+
+HistorialUsoManager.registrar = function() {
+  const idOutfit = document.getElementById('log-select-outfit')?.value;
+  const fecha = document.getElementById('log-fecha')?.value;
+  const cambios = document.getElementById('log-cambios')?.value || "";
+
+  if (!idOutfit || !fecha) {
+    alert('Por favor selecciona un outfit de tu Lookbook y una fecha válida.');
+    return;
+  }
+
+  const outfitsGuardados = Lookbook.obtenerGuardados();
+  const outfitObj = outfitsGuardados.find(o => o.id == idOutfit);
+  if (!outfitObj) return;
+
+  const tempInput = document.getElementById('temperatura-input');
+  const tempActual = tempInput ? `${tempInput.value}°C` : '18°C';
+
+  const nuevoRegistro = {
+    id: Date.now(),
+    outfitId: outfitObj.id,
+    prendas: outfitObj.prendas,
+    fecha: fecha,
+    temperatura: tempActual,
+    estrellas: FeedbackState.estrellas,
+    gustos: Array.from(FeedbackState.gustosSeleccionados),
+    cambios: cambios
+  };
+
+  const historialActual = this.obtenerRegistros();
+  historialActual.push(nuevoRegistro);
+  localStorage.setItem('fitme_historial_uso', JSON.stringify(historialActual));
+
+  alert('¡Valoración guardada! El motor ha registrado tus preferencias.');
+  this.render();
+};
+
 // Carga inicial
 Armario.render();
 Lookbook.render();

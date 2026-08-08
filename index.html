@@ -323,18 +323,16 @@
     <div id="color-prendas-preview" class="grid-container" style="margin-top: var(--spacing-md);"></div>
   </div>
 </section>
-
-<!-- SECCIÓN HISTORIAL DE USO (BITÁCORA) -->
+<!-- SECCIÓN HISTORIAL DE USO CON VALORACIÓN DETALLADA -->
 <section id="history-section" class="history-section">
   <div class="section-header">
-    <h2 class="editorial-subtitle">WEAR LOG & HISTORY</h2>
-    <span class="subtitle-caption">CHRONOLOGICAL STYLE TIMELINE</span>
+    <h2 class="editorial-subtitle">WEAR LOG & FEEDBACK</h2>
+    <span class="subtitle-caption">PERSONAL RATING AND STYLE LEARNING</span>
   </div>
 
   <div class="history-container">
-    <!-- FORMULARIO DE REGISTRO RÁPIDO DE USO -->
     <div class="history-log-form">
-      <h3 class="editorial-subtitle" style="font-size: 1.1rem; margin-bottom: var(--spacing-sm);">LOG TODAY'S OUTFIT</h3>
+      <h3 class="editorial-subtitle" style="font-size: 1.1rem; margin-bottom: var(--spacing-sm);">REGISTRAR Y EVALUAR OUTFIT</h3>
       
       <div class="form-row">
         <div class="form-group">
@@ -350,27 +348,42 @@
         </div>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="log-ocasion">LUGAR / OCASIÓN</label>
-          <input type="text" id="log-ocasion" placeholder="e.g. Facultad, Cena en Palermo" class="builder-select">
-        </div>
-
-        <div class="form-group">
-          <label for="log-valoracion">VALORACIÓN PERSONAL: <span id="val-log-score">9</span>/10</label>
-          <input type="range" id="log-valoracion" min="1" max="10" value="9">
+      <!-- VALORACIÓN POR ESTRELLAS -->
+      <div class="form-group" style="margin-top: var(--spacing-sm);">
+        <label>¿QUÉ TE PARECIÓ EL OUTFIT? *</label>
+        <div class="star-rating" id="star-rating-container">
+          <span class="star" data-value="1">★</span>
+          <span class="star" data-value="2">★</span>
+          <span class="star" data-value="3">★</span>
+          <span class="star" data-value="4">★</span>
+          <span class="star active" data-value="5">★</span>
         </div>
       </div>
 
-      <button id="btn-guardar-historial" class="btn-primary" style="margin-top: var(--spacing-xs);">
-        REGISTER ENTRY TO TIMELINE
+      <!-- FACTORES POSITIVOS -->
+      <div class="form-group" style="margin-top: var(--spacing-sm);">
+        <label>¿QUÉ TE GUSTÓ? (OPCIONAL)</label>
+        <div class="chip-group" id="group-gustos">
+          <button type="button" class="chip-btn" data-val="Colores">Colores</button>
+          <button type="button" class="chip-btn" data-val="Comodidad">Comodidad</button>
+          <button type="button" class="chip-btn" data-val="Estilo">Estilo</button>
+          <button type="button" class="chip-btn" data-val="Combinacion">Combinación</button>
+          <button type="button" class="chip-btn" data-val="Prendas">Prendas</button>
+        </div>
+      </div>
+
+      <!-- ASPECTOS A CAMBIAR -->
+      <div class="form-group" style="margin-top: var(--spacing-sm);">
+        <label for="log-cambios">¿QUÉ CAMBIARÍAS? (OPCIONAL)</label>
+        <input type="text" id="log-cambios" placeholder="ej. Cambiaría el calzado por algo más informal" class="builder-select">
+      </div>
+
+      <button id="btn-guardar-historial" class="btn-primary" style="margin-top: var(--spacing-md);">
+        GUARDAR VALORACIÓN Y ENTRENAR SISTEMA
       </button>
     </div>
 
-    <!-- TIMELINE VISUAL DE REGISTROS -->
-    <div id="timeline-container" class="timeline-wrapper" style="margin-top: var(--spacing-lg);">
-      <!-- Los registros mensuales se inyectan dinámicamente aquí -->
-    </div>
+    <div id="timeline-container" class="timeline-wrapper" style="margin-top: var(--spacing-lg);"></div>
   </div>
 </section>
 
