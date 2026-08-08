@@ -145,16 +145,21 @@
       </div>
     </div>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label for="color">MAIN COLOR (HEX) *</label>
-        <input type="color" id="color" value="#1b365d" class="color-picker-input">
-      </div>
-      <div class="form-group">
-        <label for="foto">PHOTO URL (OPTIONAL)</label>
-        <input type="url" id="foto" placeholder="https://example.com/image.jpg">
-      </div>
-    </div>
+    <!-- Reemplaza el form-group de la foto por este bloque -->
+<div class="form-row">
+  <div class="form-group">
+    <label for="color">MAIN COLOR (HEX) *</label>
+    <input type="color" id="color" value="#1b365d" class="color-picker-input">
+  </div>
+  <div class="form-group">
+    <label for="foto-upload">UPLOAD PHOTO</label>
+    <!-- accept="image/*" asegura que solo se puedan subir imágenes -->
+    <input type="file" id="foto-upload" accept="image/*" class="file-upload-input">
+  </div>
+</div>
+
+<!-- Canvas oculto para procesar los píxeles con JavaScript -->
+<canvas id="image-canvas" style="display: none;"></canvas>
 
     <div class="form-row">
       <div class="form-group">

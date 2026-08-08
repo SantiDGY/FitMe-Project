@@ -46,7 +46,7 @@ class Prenda {
 
   static hexToHSL(hex) {
     if (!hex || typeof hex !== 'string') return { h: 0, s: 0, l: 0 };
-    let cleanHex = hex.lstrip ? hex.lstrip('#') : hex.replace('#', '');
+    let cleanHex = hex.replace('#', '');
     if (cleanHex.length !== 6) cleanHex = "000000";
 
     let r = parseInt(cleanHex.slice(0, 2), 16) / 255;
@@ -114,7 +114,6 @@ const Armario = {
       const card = document.createElement('div');
       card.className = 'card-prenda';
 
-      // Validación segura contra undefined antes de aplicar .toUpperCase()
       const tipoTexto = (p.tipoEspecifico || p.categoria || "PRENDA").toUpperCase();
       const marcaTexto = (p.marca || "SIN MARCA").toUpperCase();
 
@@ -213,7 +212,7 @@ const OutfitGeneratorInteligente = {
 };
 
 // ==========================================
-// 5. EVENTOS E INTERACCIÓN
+// 5. EVENTOS E INTERACCIÓN DE USUARIO
 // ==========================================
 
 document.getElementById('categoria')?.addEventListener('change', (e) => {
@@ -253,6 +252,93 @@ document.getElementById('temperatura-input')?.addEventListener('input', (e) => {
   if (displayHeader) displayHeader.textContent = `${temp}°C`;
 });
 
+// Variable global para almacenar temporalmente la imagen procesada
+let fotoBase64Data = "";
+// ==========================================
+// 6. PROCESAMIENTO VISUAL (EXTRACCIÓN POR MEDIA PONDERADA DE SATURACIÓN)
+// ==========================================
+
+const fotoUpload = document.getElementById('foto-upload');
+const colorInput = document.getElementById('color');
+const canvas = document.getElementById('image-canvas');
+
+fotoUpload?.addEventListener('change', (evento) => {
+  const archivo = evento.target.files[0];
+  if (!archivo || !canvas) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    fotoBase64Data = e.target.result;
+    const img = new Image();
+    img.src = fotoBase64Data;
+
+    img.onload = function() {
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixeles = imageData.data;
+
+      let rSumaPonderada = 0;
+      let gSumaPonderada = 0;
+      let bSumaPonderada = 0;
+      let pesoTotal = 0;
+
+      for (let i = 0; i < pixeles.length; i += 4) {
+        const r = pixeles[i];
+        const g = pixeles[i + 1];
+        const b = pixeles[i + 2];
+        const alpha = pixeles[i + 3];
+
+        if (alpha < 125) continue;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        const brillo = (r * 299 + g * 587 + b * 114) / 1000;
+        const saturacion = max === 0 ? 0 : delta / max;
+
+        // Descartar fondos muy claros, sombras oscuras y neutros
+        const esFondoOBrillo = brillo > 215;
+        const esSombraPura = brillo < 12;
+        const esMuyNeutro = saturacion < 0.10 && brillo > 70;
+
+        if (!esFondoOBrillo && !esSombraPura && !esMuyNeutro) {
+          // El peso crece exponencialmente con la saturación
+          const peso = Math.pow(saturacion, 2);
+
+          rSumaPonderada += r * peso;
+          gSumaPonderada += g * peso;
+          bSumaPonderada += b * peso;
+          pesoTotal += peso;
+        }
+      }
+
+      if (pesoTotal > 0) {
+        const rFinal = Math.round(rSumaPonderada / pesoTotal);
+        const gFinal = Math.round(gSumaPonderada / pesoTotal);
+        const bFinal = Math.round(bSumaPonderada / pesoTotal);
+
+        const rgbToHex = (r, g, b) => {
+          return "#" + [r, g, b].map(x => {
+            const hex = Math.min(255, Math.max(0, x)).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+          }).join("").toUpperCase();
+        };
+
+        const hexDetectado = rgbToHex(rFinal, gFinal, bFinal);
+        if (colorInput) colorInput.value = hexDetectado;
+      }
+    };
+  };
+
+  reader.readAsDataURL(archivo);
+});
+// Guardado del formulario
 document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
   e.preventDefault();
   
@@ -266,7 +352,7 @@ document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
     material: document.getElementById('material').value,
     temporada: document.getElementById('temporada').value,
     colorHex: document.getElementById('color').value,
-    foto: document.getElementById('foto').value,
+    foto: fotoBase64Data, // Almacenamos la imagen cargada
     formalidad: document.getElementById('formalidad').value,
     cargaVisual: document.getElementById('carga_visual').value,
     nivelAbrigo: document.getElementById('abrigo').value,
@@ -278,9 +364,11 @@ document.getElementById('prenda-form')?.addEventListener('submit', (e) => {
   Armario.guardar(nuevaPrenda);
   
   e.target.reset();
+  fotoBase64Data = ""; // Limpiamos la imagen temporal
   if (selectTipo) selectTipo.disabled = true;
 });
 
+// Botón de generación
 document.getElementById('btn-generar')?.addEventListener('click', () => {
   const tempInput = document.getElementById('temperatura-input');
   const tempActual = tempInput ? parseInt(tempInput.value) : 18;
@@ -321,5 +409,5 @@ function mostrarOutfit(outfit) {
   containerResult.style.display = 'block';
 }
 
-// Carga e inicialización segura
+// Carga e inicialización
 Armario.render();
