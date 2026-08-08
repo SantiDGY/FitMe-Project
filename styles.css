@@ -1,60 +1,379 @@
+/* ==========================================
+   SYSTEM DESIGN & VARIABLES
+   ========================================== */
 :root {
-  --bg-primary: #f8f9fa;
-  --text-primary: #212529;
-  --accent: #2b2d42;
-  --border-radius: 8px;
+  --bg-main: #f5f5f3;         /* Blanco roto / Gris cálido muy claro */
+  --card-bg: #ffffff;
+  --text-primary: #111111;    /* Negro casi puro */
+  --text-muted: #767676;      /* Gris intermedio para subtítulos y etiquetas */
+  --border-color: #e5e5e0;
+  --accent-color: #1b365d;    /* Color de acento por defecto (Azul Petróleo / Bordó) */
+  
+  --font-editorial: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 48px;
+  --spacing-xl: 80px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-main);
   color: var(--text-primary);
-  margin: 0;
-  padding: 20px;
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
-main {
-  max-width: 900px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* ==========================================
+   HEADER & BRANDING
+   ========================================== */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-main);
 }
 
-form {
+.brand {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  background: #ffffff;
-  padding: 20px;
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-input, select, button {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.logo {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
 }
 
-button {
-  background-color: var(--accent);
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
+.tagline {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.2em;
+  margin-top: -2px;
+}
+
+.nav-menu {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--text-primary);
+}
+
+/* ==========================================
+   LAYOUT CONTAINER
+   ========================================== */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.divider {
   border: none;
+  border-top: 1px solid var(--border-color);
+  margin: var(--spacing-xl) 0;
+}
+
+/* ==========================================
+   HERO / CURATED LOOK
+   ========================================== */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--text-primary);
+  padding-bottom: var(--spacing-xs);
+}
+
+.editorial-title {
+  font-family: var(--font-editorial);
+  font-size: 2.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.weather-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.curated-card {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+}
+
+.controls-bar {
+  margin-bottom: var(--spacing-md);
+}
+
+.control-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.range-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.range-wrapper input[type="range"] {
+  flex: 1;
+  accent-color: var(--text-primary);
+}
+
+.temp-readout {
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 45px;
+}
+
+/* BUTTONS */
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: var(--spacing-sm);
+  background-color: var(--text-primary);
+  color: var(--card-bg);
+  border: none;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover, .btn-secondary:hover {
+  opacity: 0.85;
+}
+
+.outfit-display {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.outfit-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.outfit-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.match-score {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.layers-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  background: var(--bg-main);
+  border-left: 3px solid var(--text-primary);
+}
+
+.layer-category {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.layer-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.outfit-footer {
+  display: flex;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-xs);
+  border-top: 1px dashed var(--border-color);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.metric-value {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ==========================================
+   CLOSET / PIECES SECTION
+   ========================================== */
+.section-header {
+  margin-bottom: var(--spacing-md);
+}
+
+.editorial-subtitle {
+  font-family: var(--font-editorial);
+  font-size: 1.75rem;
+  font-weight: 400;
+}
+
+.subtitle-caption {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  display: block;
 }
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-md);
 }
 
 .card-prenda {
-  background: white;
-  padding: 12px;
-  border-radius: var(--border-radius);
-  border-left: 6px solid #ccc;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: var(--card-bg);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+}
+
+.card-prenda:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.card-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.card-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.card-color-indicator {
+  height: 4px;
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+/* ==========================================
+   FORM
+   ========================================== */
+.editorial-form {
+  background: var(--card-bg);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group label {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.editorial-form input[type="text"],
+.editorial-form select {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-main);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.editorial-form input[type="text"]:focus,
+.editorial-form select:focus {
+  border-color: var(--text-primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.color-picker-input {
+  height: 40px;
+  border: 1px solid var(--border-color);
+  background: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* FOOTER */
+.site-footer {
+  text-align: center;
+  padding: var(--spacing-xl) 0 var(--spacing-md);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
 }

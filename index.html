@@ -3,58 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FitMe - Armario Virtual</title>
+  <title>FORM — Your Wardrobe, Refined</title>
+  
+  <!-- Tipografías: Playfair Display (Editorial) e Inter (Sans-serif moderna) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>FitMe</h1>
-    <p>Gestor de Armario y Recomendador de Estilo</p>
+
+  <!-- NAVEGACIÓN PRINCIPAL -->
+  <header class="site-header">
+    <div class="brand">
+      <span class="logo">FORM</span>
+      <span class="tagline">YOUR WARDROBE, REFINED</span>
+    </div>
+    <nav class="nav-menu">
+      <a href="#curated" class="nav-link active">CURATED</a>
+      <a href="#pieces" class="nav-link">PIECES</a>
+      <a href="#add" class="nav-link">ADD</a>
+    </nav>
   </header>
 
-  <main>
-    <section id="form-section">
-      <h2>Agregar Nueva Prenda</h2>
-      <form id="prenda-form">
-        <input type="text" id="nombre" placeholder="Nombre (ej. Campera Harrington)" required>
-        
-        <select id="categoria" required>
-          <option value="" disabled selected>Categoría general</option>
-          <option value="Capa externa">Capa externa</option>
-          <option value="Capa media">Capa media</option>
-          <option value="Capa interna">Capa interna</option>
-          <option value="Pantalón">Pantalón</option>
-          <option value="Calzado">Calzado</option>
-        </select>
+  <main class="container">
 
-        <label for="color">Color Principal:</label>
-        <input type="color" id="color" value="#1b365d">
+    <!-- SECCIÓN HERO: RECOMENDACIÓN DEL DÍA -->
+    <section id="curated" class="hero-section">
+      <div class="hero-header">
+        <h1 class="editorial-title">YOUR LOOK TODAY</h1>
+        <div class="weather-badge">
+          <span id="val-temp-display">18°C</span> · PARCIALMENTE NUBLADO
+        </div>
+      </div>
 
-        <label for="formalidad">Formalidad (1-10): <span id="val-formalidad">5</span></label>
-        <input type="range" id="formalidad" min="1" max="10" value="5">
+      <div class="curated-card">
+        <div class="controls-bar">
+          <label for="temperatura-input" class="control-label">TEMPERATURE CONTROL</label>
+          <div class="range-wrapper">
+            <input type="range" id="temperatura-input" min="0" max="35" value="18">
+            <span id="val-temp" class="temp-readout">18°C</span>
+          </div>
+        </div>
 
-        <label for="abrigo">Nivel de Abrigo (1-10): <span id="val-abrigo">5</span></label>
-        <input type="range" id="abrigo" min="1" max="10" value="5">
+        <button id="btn-generar" class="btn-primary">GENERATE LOOK</button>
 
-        <button type="submit">Guardar Prenda</button>
+        <div id="outfit-result" class="outfit-display" style="display: none;">
+          <div class="outfit-header">
+            <span class="outfit-tag">LOOK PROPOSAL</span>
+            <div class="match-score"><span id="outfit-score">--</span>% MATCH</div>
+          </div>
+          
+          <div id="outfit-prendas-list" class="layers-stack"></div>
+
+          <div class="outfit-footer">
+            <div class="metric">
+              <span class="metric-label">FORMALITY</span>
+              <span class="metric-value"><span id="outfit-formalidad">--</span> / 10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- SECCIÓN CATÁLOGO: ARMARIO ("PIECES") -->
+    <section id="pieces" class="closet-section">
+      <div class="section-header">
+        <h2 class="editorial-subtitle">PIECES</h2>
+        <span class="subtitle-caption">YOUR CURATED COLLECTION</span>
+      </div>
+      <div id="grid-prendas" class="grid-container"></div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- SECCIÓN AGREGAR PRENDA -->
+    <section id="add" class="form-section">
+      <div class="section-header">
+        <h2 class="editorial-subtitle">NEW PIECE</h2>
+        <span class="subtitle-caption">ADD TO CATALOG</span>
+      </div>
+
+      <form id="prenda-form" class="editorial-form">
+        <div class="form-group">
+          <label for="nombre">ITEM NAME</label>
+          <input type="text" id="nombre" placeholder="e.g. Harrington Sand" required>
+        </div>
+
+        <div class="form-group">
+          <label for="categoria">CATEGORY</label>
+          <select id="categoria" required>
+            <option value="" disabled selected>Select category...</option>
+            <option value="Capa externa">Capa externa</option>
+            <option value="Capa media">Capa media</option>
+            <option value="Capa interna">Capa interna</option>
+            <option value="Pantalón">Pantalón</option>
+            <option value="Calzado">Calzado</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="color">BASE COLOR</label>
+          <input type="color" id="color" value="#1b365d" class="color-picker-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formalidad">FORMALITY: <span id="val-formalidad">5</span>/10</label>
+            <input type="range" id="formalidad" min="1" max="10" value="5">
+          </div>
+
+          <div class="form-group">
+            <label for="abrigo">WARMTH: <span id="val-abrigo">5</span>/10</label>
+            <input type="range" id="abrigo" min="1" max="10" value="5">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-secondary">SAVE TO WARDROBE</button>
       </form>
     </section>
 
-    <section id="closet-section">
-      <h2>Mi Armario</h2>
-      <div id="grid-prendas" class="grid-container"></div>
-    </section>
-    <section id="generator-section">
-  <h2>Generador de Outfits</h2>
-  <button id="btn-generar">✨ Sorprendeme (Outfit Aleatorio)</button>
-  
-  <div id="outfit-result" class="outfit-card" style="display: none;">
-    <h3>Combinación Sugerida</h3>
-    <div id="outfit-prendas-list"></div>
-    <p><strong>Formalidad promedio:</strong> <span id="outfit-formalidad"></span>/10</p>
-  </div>
-</section>
   </main>
+
+  <footer class="site-footer">
+    <p>FORM ARCHIVE SYSTEM — ALL RIGHTS RESERVED</p>
+  </footer>
 
   <script src="app.js"></script>
 </body>
