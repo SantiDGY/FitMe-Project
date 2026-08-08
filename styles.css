@@ -572,3 +572,35 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+/* FEEDBACK ACTIONS (SORPRÉNDEME) */
+.feedback-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
+  border-top: 1px dashed var(--border-color);
+}
+
+.btn-feedback {
+  flex: 1;
+  padding: 6px var(--spacing-xs);
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  text-align: center;
+}
+
+.btn-feedback:hover {
+  background: var(--card-bg);
+  border-color: var(--text-primary);
+}
+
+.btn-like:hover {
+  border-color: #e63946;
+  color: #e63946;
+}

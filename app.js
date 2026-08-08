@@ -750,6 +750,173 @@ document.getElementById('btn-guardar-builder')?.addEventListener('click', () => 
   }, 100);
 });
 
+// ==========================================
+// 9. MÓDULO "SORPRÉNDEME" (GENERADOR MÚLTIPLE Y FEEDBACK)
+// ==========================================
+
+const GeneradorSorprendeme = {
+  looksActuales: [], // Almacena los 3 looks desplegados actualmente
+
+  // Genera N candidatos únicos y retorna los mejores puntuados
+  generarLoteDeLooks(cantidad = 3) {
+    const tempInput = document.getElementById('temperatura-input');
+    const tempActual = tempInput ? parseInt(tempInput.value) : 18;
+    const candidatos = [];
+    const INTENTOS = 50; // Muestra aleatoria amplia (Monte Carlo)
+
+    for (let i = 0; i < INTENTOS; i++) {
+      const candidato = OutfitGenerator.generarAleatorio(Armario.prendas);
+      if (candidato) {
+        const evaluacion = FitMeEngine.evaluarOutfitCompleto(candidato, { temperatura: tempActual });
+        
+        // Solo aceptamos candidatos que pasen las reglas duras
+        if (evaluacion.estado !== "INCOMPATIBLE") {
+          candidato.evaluacion = evaluacion;
+          candidato.score = evaluacion.recommendationScore;
+          candidatos.push(candidato);
+        }
+      }
+    }
+
+    if (candidatos.length === 0) return [];
+
+    // Ordenar por mejor puntuación
+    candidatos.sort((a, b) => b.score - a.score);
+
+    // Desduplicar prendas exactas y tomar los top candidatos
+    const seleccionados = [];
+    for (const cand of candidatos) {
+      if (seleccionados.length >= cantidad) break;
+      
+      // Validar que no sea exactamente idéntico a uno ya seleccionado
+      const idsActuales = cand.prendas.map(p => p.id).sort().join(',');
+      const yaExiste = seleccionados.some(s => s.prendas.map(p => p.id).sort().join(',') === idsActuales);
+
+      if (!yaExiste) {
+        seleccionados.push(cand);
+      }
+    }
+
+    return seleccionados;
+  },
+
+  // Inicia la generación de las 3 tarjetas
+  ejecutar() {
+    const container = document.getElementById('multi-outfits-container');
+    if (!container) return;
+
+    this.looksActuales = this.generarLoteDeLooks(3);
+
+    if (this.looksActuales.length === 0) {
+      alert('Necesitas guardar al menos 1 Capa interna, 1 Parte inferior y 1 Calzado en tu colección para generar combinaciones.');
+      return;
+    }
+
+    container.style.display = 'grid';
+    this.render();
+  },
+
+  // Reemplaza un solo look si el usuario presiona "Regenerar" o "No me gusta"
+  regenerarUno(index) {
+    const nuevos = this.generarLoteDeLooks(5);
+    // Buscar uno que no esté actualmente en pantalla
+    const idsEnPantalla = this.looksActuales.map(l => l ? l.prendas.map(p => p.id).sort().join(',') : '');
+    
+    const reemplazo = nuevos.find(n => {
+      const idN = n.prendas.map(p => p.id).sort().join(',');
+      return !idsEnPantalla.includes(idN);
+    });
+
+    if (reemplazo) {
+      this.looksActuales[index] = reemplazo;
+      this.render();
+    } else {
+      alert('No hay suficientes combinaciones alternativas en tu armario actual.');
+    }
+  },
+
+  // Renderiza las 3 tarjetas interactivas
+  render() {
+    const container = document.getElementById('multi-outfits-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    this.looksActuales.forEach((outfit, index) => {
+      if (!outfit) return;
+
+      const card = document.createElement('div');
+      card.className = 'outfit-card-saved';
+
+      const capasHTML = outfit.prendas.map(p => `
+        <div class="layer-item-mini">
+          <div class="color-dot" style="background-color: ${p.colorHex || '#000'}"></div>
+          <span class="layer-name">${p.nombre}</span>
+          <span class="layer-cat-mini">${p.categoria}</span>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="outfit-card-header">
+          <span class="outfit-number">LOOK #${String(index + 1).padStart(2, '0')}</span>
+          <span class="match-score">${outfit.score}% MATCH</span>
+        </div>
+
+        <p class="outfit-explanation-text" style="font-size: 0.75rem; margin-bottom: 8px;">
+          ${outfit.evaluacion.explicacion}
+        </p>
+
+        <div class="layers-stack-saved">
+          ${capasHTML}
+        </div>
+
+        <div class="feedback-actions">
+          <button class="btn-feedback btn-like" data-index="${index}" title="Guardar en Lookbook">❤️ ME GUSTA</button>
+          <button class="btn-feedback btn-dislike" data-index="${index}" title="Descartar propuesta">👎 NO ME GUSTA</button>
+          <button class="btn-feedback btn-refresh" data-index="${index}" title="Probar otro look">🔄 OTRA</button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    // Asignar listeners a los botones de acción
+    container.querySelectorAll('.btn-like').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.getAttribute('data-index'));
+        const outfitAGuardar = this.looksActuales[idx];
+        
+        // Guardar en el Lookbook
+        const historial = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
+        historial.push(outfitAGuardar);
+        localStorage.setItem('fitme_outfits', JSON.stringify(historial));
+
+        alert(`¡LOOK #${idx + 1} guardado en tu Lookbook!`);
+        Lookbook.render();
+      });
+    });
+
+    container.querySelectorAll('.btn-dislike').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.getAttribute('data-index'));
+        this.regenerarUno(idx);
+      });
+    });
+
+    container.querySelectorAll('.btn-refresh').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.getAttribute('data-index'));
+        this.regenerarUno(idx);
+      });
+    });
+  }
+};
+
+// Evento del botón principal "SORPRÉNDEME"
+document.getElementById('btn-sorprendeme')?.addEventListener('click', () => {
+  GeneradorSorprendeme.ejecutar();
+});
+
 // Carga inicial
 Armario.render();
 Lookbook.render();

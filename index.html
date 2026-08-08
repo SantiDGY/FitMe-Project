@@ -31,55 +31,32 @@
 
   <main class="container">
 
-    <!-- SECCIÓN HERO: RECOMENDACIÓN DEL DÍA -->
-    <section id="curated" class="hero-section">
-      <div class="hero-header">
-        <h1 class="editorial-title">YOUR LOOK TODAY</h1>
-        <div class="weather-badge">
-          <span id="val-temp-display">18°C</span> · PARCIALMENTE NUBLADO
-        </div>
+<!-- SECCIÓN HERO: RECOMENDACIÓN DEL DÍA Y GENERADOR MÚLTIPLE -->
+<section id="curated" class="hero-section">
+  <div class="hero-header">
+    <h1 class="editorial-title">YOUR LOOK TODAY</h1>
+    <div class="weather-badge">
+      <span id="val-temp-display">18°C</span> · CONTROL CLIMÁTICO
+    </div>
+  </div>
+
+  <div class="curated-card">
+    <div class="controls-bar">
+      <label for="temperatura-input" class="control-label">TEMPERATURE CONTROL</label>
+      <div class="range-wrapper">
+        <input type="range" id="temperatura-input" min="0" max="35" value="18">
+        <span id="val-temp" class="temp-readout">18°C</span>
       </div>
+    </div>
 
-      <div class="curated-card">
-        <div class="controls-bar">
-          <label for="temperatura-input" class="control-label">TEMPERATURE CONTROL</label>
-          <div class="range-wrapper">
-            <input type="range" id="temperatura-input" min="0" max="35" value="18">
-            <span id="val-temp" class="temp-readout">18°C</span>
-          </div>
-        </div>
+    <button id="btn-sorprendeme" class="btn-primary">⚡ SORPRÉNDEME (GENERATE 3 LOOKS)</button>
 
-        <button id="btn-generar" class="btn-primary">GENERATE LOOK</button>
-
-        <!-- TARJETA DE RESULTADO CON MOTORES DE DIAGNÓSTICO -->
-        <div id="outfit-result" class="outfit-display" style="display: none;">
-          <div class="outfit-header">
-            <span class="outfit-tag">LOOK PROPOSAL</span>
-            <div class="match-score"><span id="outfit-score">--</span>% RECOMMENDATION</div>
-          </div>
-          
-          <!-- Explicación en texto natural generada por FitMeEngine -->
-          <p id="outfit-explicacion" class="outfit-explanation-text"></p>
-
-          <div id="outfit-prendas-list" class="layers-stack"></div>
-
-          <div class="outfit-footer-metrics">
-            <div class="metric-card">
-              <span class="metric-label">COMPATIBILITY</span>
-              <span class="metric-value"><span id="metric-compat">--</span>%</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">COLOR HARMONY</span>
-              <span class="metric-value"><span id="metric-color-val">--</span>/100</span>
-            </div>
-            <div class="metric-card">
-              <span class="metric-label">CLIMATE MATCH</span>
-              <span class="metric-value"><span id="metric-clima-val">--</span>/100</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- PRODUCCIÓN MÚLTIPLE DE OUTFITS -->
+    <div id="multi-outfits-container" class="grid-container-outfits" style="display: none; margin-top: var(--spacing-lg);">
+      <!-- Las 3 tarjetas de looks se inyectan dinámicamente aquí -->
+    </div>
+  </div>
+</section>
 
     <hr class="divider">
 
