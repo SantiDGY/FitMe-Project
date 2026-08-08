@@ -409,5 +409,268 @@ function mostrarOutfit(outfit) {
   containerResult.style.display = 'block';
 }
 
+// ==========================================
+// 7. CONSTRUCTOR MANUAL Y EVALUACIÓN EN TIEMPO REAL
+// ==========================================
+
+const BuilderStudio = {
+  // Estado actual de la composición manual
+  slots: {
+    "Capa interna": null,
+    "Capa media": null,
+    "Capa externa": null,
+    "Parte inferior": null,
+    "Calzado": null
+  },
+
+  // Inicializa y puebla los desplegables según las prendas guardadas en el Armario
+  poblarSelects() {
+    const mapeoSelects = {
+      "Capa interna": document.getElementById('slot-interna'),
+      "Capa media": document.getElementById('slot-media'),
+      "Capa externa": document.getElementById('slot-externa'),
+      "Parte inferior": document.getElementById('slot-inferior'),
+      "Calzado": document.getElementById('slot-calzado')
+    };
+
+    // Limpiar y reiniciar opciones
+    for (const [categoria, selectEl] of Object.entries(mapeoSelects)) {
+      if (!selectEl) continue;
+
+      const esOpcional = categoria.includes('media') || categoria.includes('externa');
+      selectEl.innerHTML = esOpcional 
+        ? '<option value="">-- Ninguna --</option>' 
+        : '<option value="">-- Sin seleccionar --</option>';
+
+      // Filtrar prendas del armario pertenecientes a esta categoría
+      const prendasCat = Armario.prendas.filter(p => p.categoria === categoria || (categoria === 'Parte inferior' && p.categoria === 'Pantalón'));
+
+      prendasCat.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = `${p.nombre} (${p.tipoEspecifico || p.categoria})`;
+        selectEl.appendChild(option);
+      });
+    }
+  },
+
+  // Obtiene el arreglo de objetos Prenda seleccionados actualmente
+  getPrendasSeleccionadas() {
+    return Object.values(this.slots).filter(p => p !== null);
+  },
+
+  // Actualiza los cálculos matemáticos y la vista
+  recalcular() {
+    const prendasActuales = this.getPrendasSeleccionadas();
+    const stackContainer = document.getElementById('builder-stack');
+    const btnGuardar = document.getElementById('btn-guardar-builder');
+
+    if (!stackContainer) return;
+
+    stackContainer.innerHTML = '';
+
+    if (prendasActuales.length === 0) {
+      stackContainer.innerHTML = `<p class="empty-msg">Selecciona prendas para iniciar la composición.</p>`;
+      this.actualizarMetricas(0, 0, 0, 0);
+      if (btnGuardar) btnGuardar.disabled = true;
+      return;
+    }
+
+    // Renderizar lista visual de prendas apiladas
+    prendasActuales.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'layer-item';
+      item.style.borderLeftColor = p.colorHex || '#000';
+      item.innerHTML = `
+        <div>
+          <div class="layer-category">${p.categoria}</div>
+          <div class="layer-name">${p.nombre}</div>
+        </div>
+      `;
+      stackContainer.appendChild(item);
+    });
+
+    // Obtener la temperatura global establecida en la interfaz
+    const tempInput = document.getElementById('temperatura-input');
+    const tempActual = tempInput ? parseInt(tempInput.value) : 18;
+
+    // Calcular evaluaciones usando el motor EvaluadorStylist
+    const scoreColor = EvaluadorStylist.evaluarColor(prendasActuales);
+    const scoreClima = EvaluadorStylist.evaluarClima(prendasActuales, tempActual);
+    const scoreGlobal = Math.round((scoreColor * 0.4) + (scoreClima * 0.6));
+
+    const sumaFormalidad = prendasActuales.reduce((acc, p) => acc + (p.formalidad || 5), 0);
+    const formalidadPromedio = (sumaFormalidad / prendasActuales.length).toFixed(1);
+
+    this.actualizarMetricas(scoreGlobal, scoreColor, scoreClima, formalidadPromedio);
+
+    // Habilitar el guardado si al menos tiene la estructura básica (Interna + Inferior + Calzado)
+    const tieneBase = this.slots["Capa interna"] && this.slots["Parte inferior"] && this.slots["Calzado"];
+    if (btnGuardar) btnGuardar.disabled = !tieneBase;
+  },
+
+  actualizarMetricas(match, color, clima, formalidad) {
+    const elMatch = document.getElementById('builder-match');
+    const elColor = document.getElementById('metric-color');
+    const elClima = document.getElementById('metric-clima');
+    const elFormalidad = document.getElementById('metric-formalidad');
+
+    if (elMatch) elMatch.textContent = match;
+    if (elColor) elColor.textContent = color;
+    if (elClima) elClima.textContent = clima;
+    if (elFormalidad) elFormalidad.textContent = formalidad;
+  }
+};
+
+// ==========================================
+// LISTENERS DEL CONSTRUCTOR
+// ==========================================
+
+const vincularSlot = (elementId, categoria) => {
+  document.getElementById(elementId)?.addEventListener('change', (e) => {
+    const idPrenda = e.target.value;
+    BuilderStudio.slots[categoria] = idPrenda 
+      ? Armario.prendas.find(p => p.id == idPrenda) || null 
+      : null;
+    BuilderStudio.recalcular();
+  });
+};
+
+vincularSlot('slot-interna', 'Capa interna');
+vincularSlot('slot-media', 'Capa media');
+vincularSlot('slot-externa', 'Capa externa');
+vincularSlot('slot-inferior', 'Parte inferior');
+vincularSlot('slot-calzado', 'Calzado');
+
+// Guardar Outfit personalizado
+document.getElementById('btn-guardar-builder')?.addEventListener('click', () => {
+  const prendas = BuilderStudio.getPrendasSeleccionadas();
+  const ocasion = document.getElementById('slot-ocasion')?.value || 'Casual';
+
+  const nuevoOutfit = new Outfit(Date.now(), prendas);
+  nuevoOutfit.ocasion = ocasion;
+
+  // Guardar en el historial local de outfits
+  const historialOutfits = JSON.parse(localStorage.getItem('fitme_outfits')) || [];
+  historialOutfits.push(nuevoOutfit);
+  localStorage.setItem('fitme_outfits', JSON.stringify(historialOutfits));
+
+  alert('¡Outfit guardado con éxito en tu colección!');
+});
+
+// Actualizar las opciones del constructor al agregar una nueva prenda
+const funcionGuardarOriginal = Armario.guardar.bind(Armario);
+Armario.guardar = function(prenda) {
+  funcionGuardarOriginal(prenda);
+  BuilderStudio.poblarSelects();
+};
+
+// Carga inicial del Studio Builder
+BuilderStudio.poblarSelects();
+
+// ==========================================
+// 8. GESTOR DE OUTFITS GUARDADOS (LOOKBOOK)
+// ==========================================
+
+const Lookbook = {
+  // Carga los outfits guardados desde localStorage
+  obtenerGuardados() {
+    const raw = localStorage.getItem('fitme_outfits');
+    if (!raw) return [];
+    
+    try {
+      const parsed = JSON.parse(raw);
+      // Reconstruimos los objetos Outfit con sus métodos
+      return parsed.map(o => {
+        const prendasInstanciadas = o.prendas.map(p => new Prenda(p));
+        const outfitObj = new Outfit(o.id, prendasInstanciadas);
+        outfitObj.ocasion = o.ocasion || 'Casual';
+        outfitObj.score = o.score || EvaluadorStylist.evaluarColor(prendasInstanciadas);
+        return outfitObj;
+      });
+    } catch (e) {
+      console.error("Error al leer outfits de localStorage:", e);
+      return [];
+    }
+  },
+
+  // Elimina un outfit por su ID
+  eliminar(id) {
+    const listaActual = this.obtenerGuardados();
+    const listaFiltrada = listaActual.filter(o => o.id !== id);
+    localStorage.setItem('fitme_outfits', JSON.stringify(listaFiltrada));
+    this.render();
+  },
+
+  // Renderiza la lista de tarjetas en el DOM
+  render() {
+    const container = document.getElementById('grid-outfits');
+    if (!container) return;
+
+    const outfits = this.obtenerGuardados();
+    container.innerHTML = '';
+
+    if (outfits.length === 0) {
+      container.innerHTML = `<p class="empty-msg">No hay outfits guardados aún. Usa el Studio Builder para guardar tus combinaciones.</p>`;
+      return;
+    }
+
+    outfits.forEach((outfit, index) => {
+      const card = document.createElement('div');
+      card.className = 'outfit-card-saved';
+
+      // Generar el HTML para cada capa de ropa
+      const capasHTML = outfit.prendas.map(p => `
+        <div class="layer-item-mini">
+          <div class="color-dot" style="background-color: ${p.colorHex || '#000'}"></div>
+          <span class="layer-name">${p.nombre}</span>
+          <span class="layer-cat-mini">${p.categoria}</span>
+        </div>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="outfit-card-header">
+          <span class="outfit-number">LOOK #${String(index + 1).padStart(2, '0')}</span>
+          <span class="outfit-ocasion">${outfit.ocasion.toUpperCase()}</span>
+        </div>
+
+        <div class="layers-stack-saved">
+          ${capasHTML}
+        </div>
+
+        <div class="outfit-card-footer">
+          <div class="metric">
+            <span class="metric-label">FORMALITY</span>
+            <span class="metric-value">${outfit.formalidadPromedio}/10</span>
+          </div>
+          <button class="btn-delete-outfit" data-id="${outfit.id}">DELETE</button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    // Asignar eventos de eliminación a los botones generados
+    container.querySelectorAll('.btn-delete-outfit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = Number(e.target.getAttribute('data-id'));
+        this.eliminar(id);
+      });
+    });
+  }
+};
+
+// Modificar la acción de guardar del Studio Builder para refrescar el Lookbook
+document.getElementById('btn-guardar-builder')?.addEventListener('click', () => {
+  // Se da un pequeño margen de tiempo para asegurar que el registro se guardó en localStorage
+  setTimeout(() => {
+    Lookbook.render();
+  }, 100);
+});
+
+// Carga inicial de la galería al abrir la aplicación
+Lookbook.render();
+
+
 // Carga e inicialización
 Armario.render();

@@ -80,6 +80,107 @@
 
     <hr class="divider">
 
+    <!-- SECCIÓN CONSTRUCTOR MANUAL DE OUTFITS -->
+<section id="builder" class="builder-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">STUDIO BUILDER</h2>
+    <span class="subtitle-caption">MANUAL OUTFIT COMPOSITION</span>
+  </div>
+
+  <div class="builder-container">
+    <!-- PANEL IZQUIERDO: SELECCIÓN POR CAPAS -->
+    <div class="builder-controls">
+      <div class="form-group">
+        <label for="slot-interna">CAPA INTERNA</label>
+        <select id="slot-interna" class="builder-select">
+          <option value="">-- Sin seleccionar --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="slot-media">CAPA MEDIA (OPCIONAL)</label>
+        <select id="slot-media" class="builder-select">
+          <option value="">-- Ninguna --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="slot-externa">CAPA EXTERNA (OPCIONAL)</label>
+        <select id="slot-externa" class="builder-select">
+          <option value="">-- Ninguna --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="slot-inferior">PARTE INFERIOR *</label>
+        <select id="slot-inferior" class="builder-select">
+          <option value="">-- Sin seleccionar --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="slot-calzado">CALZADO *</label>
+        <select id="slot-calzado" class="builder-select">
+          <option value="">-- Sin seleccionar --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="slot-ocasion">OCASIÓN DE USO</label>
+        <select id="slot-ocasion">
+          <option value="Casual">Casual / Diario</option>
+          <option value="Merienda">Merienda / Salida</option>
+          <option value="Trabajo">Trabajo / Estudio</option>
+          <option value="Noche">Noche / Bar</option>
+          <option value="Formal">Evento Formal</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO: VISTA PREVIA Y SCORE EN TIEMPO REAL -->
+    <div class="builder-preview">
+      <div class="preview-header">
+        <span class="outfit-tag">COMPOSITION ANALYSIS</span>
+        <div class="match-score"><span id="builder-match">0</span>% MATCH</div>
+      </div>
+
+      <div id="builder-stack" class="layers-stack">
+        <p class="empty-msg">Selecciona prendas para iniciar la composición.</p>
+      </div>
+
+      <!-- METRICAS EN TIEMPO REAL -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">COLOR HARMONY</span>
+          <span class="metric-value"><span id="metric-color">0</span>/100</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">WEATHER ADEQUACY</span>
+          <span class="metric-value"><span id="metric-clima">0</span>/100</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">FORMALITY AVG</span>
+          <span class="metric-value"><span id="metric-formalidad">0</span>/10</span>
+        </div>
+      </div>
+
+      <button id="btn-guardar-builder" class="btn-primary" disabled>SAVE OUTFIT TO ARCHIVE</button>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN HISTORIAL DE OUTFITS GUARDADOS -->
+<section id="saved-outfits" class="saved-section">
+  <div class="section-header">
+    <h2 class="editorial-subtitle">LOOKBOOK</h2>
+    <span class="subtitle-caption">SAVED COMBINATIONS</span>
+  </div>
+
+  <div id="grid-outfits" class="grid-container-outfits">
+    <p class="empty-msg">No hay outfits guardados aún. Usa el Studio Builder o el Generador para guardar tus combinaciones.</p>
+  </div>
+</section>
+
     <!-- SECCIÓN AGREGAR PRENDA EXTENDIDA -->
 <section id="add" class="form-section">
   <div class="section-header">
