@@ -1,0 +1,60 @@
+:root {
+  --bg-primary: #f8f9fa;
+  --text-primary: #212529;
+  --accent: #2b2d42;
+  --border-radius: 8px;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 20px;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+input, select, button {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  background-color: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.card-prenda {
+  background: white;
+  padding: 12px;
+  border-radius: var(--border-radius);
+  border-left: 6px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}

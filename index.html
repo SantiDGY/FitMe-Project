@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitMe - Armario Virtual</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>FitMe</h1>
+    <p>Gestor de Armario y Recomendador de Estilo</p>
+  </header>
+
+  <main>
+    <section id="form-section">
+      <h2>Agregar Nueva Prenda</h2>
+      <form id="prenda-form">
+        <input type="text" id="nombre" placeholder="Nombre (ej. Campera Harrington)" required>
+        
+        <select id="categoria" required>
+          <option value="" disabled selected>Categoría general</option>
+          <option value="Capa externa">Capa externa</option>
+          <option value="Capa media">Capa media</option>
+          <option value="Capa interna">Capa interna</option>
+          <option value="Pantalón">Pantalón</option>
+          <option value="Calzado">Calzado</option>
+        </select>
+
+        <label for="color">Color Principal:</label>
+        <input type="color" id="color" value="#1b365d">
+
+        <label for="formalidad">Formalidad (1-10): <span id="val-formalidad">5</span></label>
+        <input type="range" id="formalidad" min="1" max="10" value="5">
+
+        <label for="abrigo">Nivel de Abrigo (1-10): <span id="val-abrigo">5</span></label>
+        <input type="range" id="abrigo" min="1" max="10" value="5">
+
+        <button type="submit">Guardar Prenda</button>
+      </form>
+    </section>
+
+    <section id="closet-section">
+      <h2>Mi Armario</h2>
+      <div id="grid-prendas" class="grid-container"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
